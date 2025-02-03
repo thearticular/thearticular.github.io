@@ -43,6 +43,8 @@
         href='wp-content/plugins/gutenberg/build/block-library/styleb3b9.css'>
     <link rel='stylesheet'
         href='wp-content/themes/hever/stylee2c1.css'>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
             --wp--preset--spacing--30: 0.67rem;
@@ -86,6 +88,10 @@
             margin: 1px;
         }
 
+        button i {
+            margin-right: 8px;
+        }
+
         select,
         button {
             background-color: #00000000;
@@ -125,15 +131,7 @@
 
         #custom-seekbar span {
             background-color: rgb(255, 255, 255);
-            height: 25px;
-        }
-
-        #cursor {
-            position: absolute;
-            width: 2px;
             height: 23px;
-            background-color: red;
-            transition: left 0.05s linear;
         }
 
         #timeDisplay {
@@ -227,29 +225,52 @@
                     </div>
                 </div>
                 <div class="controls">
-                    <select id="videoSelector"></select>
+                    <select id="videoSelector">
+                        <option value="">📹 Select Video</option>
+                    </select>
                 </div>
                 <div class="controls">
-                    <button id="flatBtn">Flat</button>
-                    <button id="bassBtn">Bass</button>
-                    <button id="trebleBtn">Treble</button>
-                    <button id="panningBtn">Binuaral</button>
+                    <button id="flatBtn">
+                        <i class="fa-solid fa-equals"></i> Flat
+                    </button>
+                    <button id="bassBtn">
+                        <i class="fa-solid fa-sort-down"></i> Bass
+                    </button>
+                    <button id="trebleBtn">
+                        <i class="fa-solid fa-sort-up"></i> Treble
+                    </button>
+                    <button id="panningBtn">
+                        <i class="fa-solid fa-arrows-alt-h"></i> Binaural
+                    </button>
                 </div>
                 <div class="controls">
-                    <button id="loopBtn">Loop</button>
-                    <button id="pauseBtn">Pause</button>
-                    <button id="playAll">Play All</button>
-                    <button id="stopBtn">Stop</button>
+                    <button id="loopBtn">
+                        <i class="fa-solid fa-repeat"></i> Loop
+                    </button>
+                    <button id="pauseBtn">
+                        <i class="fa-solid fa-pause"></i> Pause
+                    </button>
+                    <button id="playAll">
+                        <i class="fa-solid fa-play-circle"></i> Play All
+                    </button>
+                    <button id="stopBtn">
+                        <i class="fa-solid fa-stop"></i> Stop
+                    </button>
                 </div>
                 <div class="controls">
-                    <button id="prevBtn">Previous</button>
-                    <button id="playBtn">Play</button>
-                    <button id="nextBtn">Next</button>
+                    <button id="prevBtn">
+                        <i class="fa-solid fa-step-backward"></i> Previous
+                    </button>
+                    <button id="playBtn">
+                        <i class="fa-solid fa-play"></i> Play
+                    </button>
+                    <button id="nextBtn">
+                        <i class="fa-solid fa-step-forward"></i> Next
+                    </button>
                 </div>
                 <div id="custom-seekbar">
                     <span>
                     </span>
-                    <div id="cursor"></div>
                     <div id="timeDisplay">
                         <div id="currentTime">00:00</div>/<div id="totalTime">00:00</div>
                     </div>
@@ -516,7 +537,6 @@
                 requestAnimationFrame(() =>
                 {
                     $(seekbarSpan).css("width", percentage + "%");
-                    $(cursor).css("left", `calc(${ percentage }% - 0px)`);
                 });
                 currentTimeElement.textContent = formatTime(videoElement.currentTime);
             };
@@ -529,7 +549,6 @@
                 var vidTime = videoElement.duration * percentage;
                 videoElement.currentTime = vidTime;
                 $(seekbarSpan).css("width", percentage * 100 + "%");
-                $(cursor).css("left", `calc(${ percentage * 100 }% - 0px)`);
             });
         }
         function setupAudioSource(video)
@@ -591,7 +610,7 @@
         }
         function updateHue()
         {
-            hue += 0.5;
+            hue += 0.1;
             if (hue > 360) { hue = 0; }
         }
         function drawCircles(amplitude)
@@ -770,7 +789,6 @@
             currentIndex = 0;
             videoSelector.value = currentIndex;
             $(seekbarSpan).css("width", 0 + "%");
-            $(cursor).css("left", `calc(${ 0 }% - 0px)`);
             flatActive = true;
             bassActive = false;
             trebleActive = false;
@@ -862,19 +880,19 @@
             const len = amplitudeData.length;
             if (len === 0) return;
             const sampleWidth = audioMapCanvas.width / MAX_SAMPLES;
-            audioMapCtx.strokeStyle = "#fff";
+            updateHue();
+            audioMapCtx.strokeStyle = `hsl(${ hue }, 100%, 50%)`;
             audioMapCtx.lineWidth = 1;
             audioMapCtx.beginPath();
             for (let i = 0; i < len; i++)
             {
-                const normalizedValue = (amplitudeData[i] / 255) ** 1;
+                const normalizedValue = (amplitudeData[i] / 256) ** 1;
                 const y = audioMapCanvas.height - normalizedValue * audioMapCanvas.height * 2;
                 const x = i * sampleWidth;
                 if (i === 0)
                 {
                     audioMapCtx.moveTo(x, y);
-                }
-                else
+                } else
                 {
                     audioMapCtx.lineTo(x, y);
                 }
@@ -901,6 +919,19 @@
             requestAnimationFrame(animateAudioMap);
         }
         animateAudioMap();
+        function updateSeekbarColor()
+        {
+            const span = document.querySelector("#custom-seekbar span");
+            if (span)
+            {
+                span.style.backgroundColor = `hsla(${ hue }, 100%, 50%, ${ 0.4 })`;
+            }
+        }
+        setInterval(() =>
+        {
+            updateHue();
+            updateSeekbarColor();
+        }, 50);
     </script>
 </body>
 
