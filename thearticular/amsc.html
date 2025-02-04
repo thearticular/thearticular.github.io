@@ -132,8 +132,10 @@
         }
 
         #custom-seekbar span {
-            background-color: rgb(255, 255, 255);
-            height: 38px;
+            background-color: #fff;
+            width: 2px;
+            height: 100%;
+            position: relative;
         }
 
         #timeDisplay {
@@ -148,6 +150,8 @@
             width: 100%;
             display: none;
             font-weight: bold;
+            z-index: 3;
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
         }
 
         #loadingText {
@@ -160,19 +164,20 @@
             z-index: 10;
             animation: hueRotate 1s infinite linear;
             font-weight: bold;
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
         }
 
         @keyframes hueRotate {
             0% {
-                filter: brightness(0);
-            }
-
-            50% {
                 filter: brightness(1);
             }
 
+            50% {
+                filter: brightness(2);
+            }
+
             100% {
-                filter: brightness(0);
+                filter: brightness(1);
             }
         }
 
@@ -205,6 +210,15 @@
             margin: 1px auto;
             font-weight: normal;
             font-weight: bold;
+        }
+
+        #waveformCanvas {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+            z-index: 0;
         }
     </style>
 </head>
@@ -272,20 +286,13 @@
                     </button>
                 </div>
                 <div id="custom-seekbar">
+                    <canvas id="waveformCanvas"></canvas>
                     <span>
                     </span>
                     <div id="timeDisplay">
                         <div id="currentTime">00:00</div>/<div id="totalTime">00:00</div>
                     </div>
                     <div id="loadingText">Loading Please Wait...</div>
-                </div>
-                <div id="audioMapContainer"
-                    style="width:100%; border: 2px solid #fff; position: relative; display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    margin: 1px auto;">
-                    <canvas id="audioMapCanvas"
-                        style="width:100%; height:40px; display:block;"></canvas>
                 </div>
                 <div class="video-container">
                     <video class="video"
@@ -353,6 +360,9 @@
         const analyser = audioContext.createAnalyser();
         const canvas = document.getElementById("backgroundCanvas");
         const ctx = canvas.getContext("2d");
+        const waveformCanvas = document.getElementById('waveformCanvas');
+        const waveformCtx = waveformCanvas.getContext('2d');
+        let audioBufferCache = new Map();
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         let currentIndex = 0;
@@ -485,12 +495,15 @@
             videoElement.currentTime = 0;
             videoElement.style.display = 'none';
         }
-        function playVideo(index)
+        async function playVideo(index)
         {
             resetVideo();
             document.getElementById('timeDisplay').style.display = 'none';
             document.getElementById('loadingText').style.display = 'block';
-            videoElement.src = videoSources[index];
+            const videoURL = videoSources[index];
+            videoElement.src = videoURL;
+            const audioBuffer = await processAudioForWaveform(videoURL);
+            drawWaveform(audioBuffer);
             videoElement.load();
             videoElement.style.display = 'block';
             const checkVideoReady = setInterval(() =>
@@ -539,7 +552,7 @@
                 const percentage = (videoElement.currentTime / videoElement.duration) * 100;
                 requestAnimationFrame(() =>
                 {
-                    $(seekbarSpan).css("width", percentage + "%");
+                    seekbarSpan.style.left = percentage + "%";
                 });
                 currentTimeElement.textContent = formatTime(videoElement.currentTime);
             };
@@ -551,7 +564,7 @@
                 var percentage = (left / totalWidth);
                 var vidTime = videoElement.duration * percentage;
                 videoElement.currentTime = vidTime;
-                $(seekbarSpan).css("width", percentage * 100 + "%");
+                seekbarSpan.style.left = percentage + "%";
             });
         }
         function setupAudioSource(video)
@@ -791,7 +804,7 @@
             videoElement.load();
             currentIndex = 0;
             videoSelector.value = currentIndex;
-            $(seekbarSpan).css("width", 0 + "%");
+            seekbarSpan.style.left = 0 + "%";
             flatActive = true;
             bassActive = false;
             trebleActive = false;
@@ -847,94 +860,46 @@
         updateVideoSelector();
         playVideo(currentIndex);
         animate();
-        const audioMapCanvas = document.getElementById("audioMapCanvas");
-        const audioMapCtx = audioMapCanvas.getContext("2d");
-        function resizeAudioMapCanvas()
+        async function processAudioForWaveform(videoURL)
         {
-            audioMapCanvas.width = audioMapCanvas.offsetWidth;
-            audioMapCanvas.height = audioMapCanvas.offsetHeight;
-        }
-        resizeAudioMapCanvas();
-        window.addEventListener("resize", resizeAudioMapCanvas);
-        let amplitudeData = [];
-        const sampleInterval = 100;
-        let samplingIntervalId = null;
-        const MAX_SAMPLES = 100;
-        function sampleAudioData()
-        {
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            analyser.getByteFrequencyData(dataArray);
-            let sum = 0;
-            for (let i = 0; i < bufferLength; i++)
+            if (audioBufferCache.has(videoURL))
             {
-                sum += dataArray[i];
+                return audioBufferCache.get(videoURL);
             }
-            const averageAmplitude = sum / bufferLength;
-            if (amplitudeData.length >= MAX_SAMPLES)
-            {
-                amplitudeData.shift();
-            }
-            amplitudeData.push(averageAmplitude);
+            const response = await fetch(videoURL);
+            const arrayBuffer = await response.arrayBuffer();
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            audioBufferCache.set(videoURL, audioBuffer);
+            return audioBuffer;
         }
-        function drawAudioMap()
+        function drawWaveform(audioBuffer)
         {
-            audioMapCtx.clearRect(0, 0, audioMapCanvas.width, audioMapCanvas.height);
-            const len = amplitudeData.length;
-            if (len === 0) return;
-            const sampleWidth = audioMapCanvas.width / MAX_SAMPLES;
-            updateHue();
-            audioMapCtx.strokeStyle = `hsl(${ hue }, 100%, 50%)`;
-            audioMapCtx.lineWidth = 2;
-            audioMapCtx.beginPath();
-            for (let i = 0; i < len; i++)
+            waveformCanvas.width = seekbar.offsetWidth;
+            waveformCanvas.height = seekbar.offsetHeight;
+            const channelData = audioBuffer.getChannelData(0);
+            const step = Math.ceil(channelData.length / waveformCanvas.width);
+            waveformCtx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height);
+            waveformCtx.strokeStyle = '#ffffff';
+            waveformCtx.lineWidth = 1;
+            for (let x = 0; x < waveformCanvas.width; x++)
             {
-                const normalizedValue = (amplitudeData[i] / 256) ** 1;
-                const y = audioMapCanvas.height - normalizedValue * audioMapCanvas.height * 2;
-                const x = i * sampleWidth;
-                if (i === 0)
-                {
-                    audioMapCtx.moveTo(x, y);
-                } else
-                {
-                    audioMapCtx.lineTo(x, y);
-                }
-            }
-            audioMapCtx.stroke();
-        }
-        videoElement.addEventListener("play", () =>
-        {
-            amplitudeData = [];
-            if (samplingIntervalId) clearInterval(samplingIntervalId);
-            samplingIntervalId = setInterval(sampleAudioData, sampleInterval);
-        });
-        videoElement.addEventListener("pause", () =>
-        {
-            if (samplingIntervalId) clearInterval(samplingIntervalId);
-        });
-        videoElement.addEventListener("ended", () =>
-        {
-            if (samplingIntervalId) clearInterval(samplingIntervalId);
-        });
-        function animateAudioMap()
-        {
-            drawAudioMap();
-            requestAnimationFrame(animateAudioMap);
-        }
-        animateAudioMap();
-        function updateSeekbarColor()
-        {
-            const span = document.querySelector("#custom-seekbar span");
-            if (span)
-            {
-                span.style.backgroundColor = `hsla(${ hue }, 100%, 50%, ${ 0.3 })`;
+                const start = Math.floor(x * step);
+                const end = Math.floor((x + 1) * step);
+                const slice = channelData.slice(start, end);
+                const min = Math.min(...slice);
+                const max = Math.max(...slice);
+                const scale = 1;
+                const exponent = 2;
+                const mid = waveformCanvas.height / 2;
+                const transform = (value) => Math.sign(value) * Math.pow(Math.abs(value), exponent);
+                const yMin = mid + (transform(min) * mid * scale);
+                const yMax = mid + (transform(max) * mid * scale);
+                waveformCtx.beginPath();
+                waveformCtx.moveTo(x, yMin);
+                waveformCtx.lineTo(x, yMax);
+                waveformCtx.stroke();
             }
         }
-        setInterval(() =>
-        {
-            updateHue();
-            updateSeekbarColor();
-        }, 50);
     </script>
 </body>
 
