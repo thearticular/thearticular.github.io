@@ -166,19 +166,8 @@
             display: inline;
         }
 
-        #audio-visualizer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: -10;
-        }
-
         #backgroundCanvas {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
             z-index: -10;
         }
 
@@ -594,87 +583,29 @@
             const averageAmplitude = sum / bufferLength / 2;
             drawCircles(averageAmplitude);
         }
-        function updateHue()
-        {
-            hue += 0.1;
-            if (hue > 360) { hue = 0; }
-        }
         function drawCircles(amplitude)
         {
-            updateHue();
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const numCircles = 5;
-            const maxRadius = Math.min(canvas.width, canvas.height);
-            const baseRadius = maxRadius * 0.2;
-            for (let i = 0; i < numCircles; i++)
+            for (let i = 0; i < 5; i++)
             {
-                const radius = baseRadius * (i + 1) + amplitude / 1;
-                const opacity = (i / numCircles) * 0.3 + 0.1;
-                const strokeStyle = `hsla(${ hue }, 100%, 50%, ${ opacity })`;
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.arc(canvas.width / 2, canvas.height / 2, radius, 0, Math.PI * 2);
-                ctx.strokeStyle = strokeStyle;
-                ctx.stroke();
-                ctx.beginPath();
-                for (let j = 0; j < 3; j++)
-                {
-                    const angle = (j * 2 * Math.PI) / 3 - Math.PI / 2;
-                    const x = canvas.width / 2 + radius * Math.cos(angle);
-                    const y = canvas.height / 2 + radius * Math.sin(angle);
-                    j === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-                }
+                let radius = Math.min(canvas.width, canvas.height) * 0.2 * i + amplitude / 0.3;
+                let centerX = canvas.width / 2;
+                let centerY = canvas.height / 2;
+                let triangleHeight = radius * Math.sqrt(1) / 1;
+                let x1 = centerX;
+                let y1 = centerY - radius;
+                let x2 = centerX - radius * Math.cos(Math.PI / 6);
+                let y2 = centerY + triangleHeight / 2;
+                let x3 = centerX + radius * Math.cos(Math.PI / 6);
+                let y3 = centerY + triangleHeight / 2;
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.lineTo(x3, y3);
                 ctx.closePath();
-                ctx.strokeStyle = strokeStyle;
+                ctx.strokeStyle = `hsla(0, 0%, 100%, ${ (1 - i / 5) * 0.5 })`;
                 ctx.stroke();
-                ctx.beginPath();
-                for (let j = 0; j < 4; j++)
-                {
-                    const angle = (j * Math.PI) / 2 + Math.PI / 4;
-                    const x = canvas.width / 2 + radius * Math.cos(angle);
-                    const y = canvas.height / 2 + radius * Math.sin(angle);
-                    j === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-                }
-                ctx.closePath();
-                ctx.strokeStyle = strokeStyle;
-                ctx.stroke();
-                ctx.beginPath();
-                for (let j = 0; j < 5; j++)
-                {
-                    const angle = (j * 2 * Math.PI) / 5 - Math.PI / 2;
-                    const x = canvas.width / 2 + radius * Math.cos(angle);
-                    const y = canvas.height / 2 + radius * Math.sin(angle);
-                    j === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-                }
-                ctx.closePath();
-                ctx.strokeStyle = strokeStyle;
-                ctx.stroke();
-                const starRadiusOuter = radius;
-                const starRadiusInner = starRadiusOuter * 0.5;
-                ctx.beginPath();
-                for (let j = 0; j < 10; j++)
-                {
-                    const angle = (j * Math.PI) / 5 - Math.PI / 2;
-                    const currentRadius = j % 2 === 0 ? starRadiusOuter : starRadiusInner;
-                    const x = canvas.width / 2 + currentRadius * Math.cos(angle);
-                    const y = canvas.height / 2 + currentRadius * Math.sin(angle);
-                    j === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-                }
-                ctx.closePath();
-                ctx.strokeStyle = strokeStyle;
-                ctx.stroke();
-                ctx.beginPath();
-                for (let j = 0; j < 4; j++)
-                {
-                    const angle = (j * Math.PI) / 2;
-                    const x = canvas.width / 2 + radius * Math.cos(angle);
-                    const y = canvas.height / 2 + radius * Math.sin(angle);
-                    const orbSize = amplitude * 0.5;
-                    ctx.beginPath();
-                    ctx.arc(x, y, orbSize, 0, Math.PI * 2);
-                    ctx.fillStyle = strokeStyle;
-                    ctx.fill();
-                }
             }
         }
         function animate()
