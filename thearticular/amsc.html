@@ -146,8 +146,6 @@
             transform: translate(-50%, -50%);
             font-size: 15px;
             color: white;
-            display: inline;
-            width: 100%;
             display: none;
             font-weight: bold;
             z-index: 3;
@@ -208,7 +206,6 @@
             text-align: center;
             width: 100%;
             margin: 1px auto;
-            font-weight: normal;
             font-weight: bold;
         }
 
@@ -247,48 +244,25 @@
                     </select>
                 </div>
                 <div class="controls">
-                    <button id="flatBtn">
-                        <i class="fa-solid fa-equals"></i> Flat
-                    </button>
-                    <button id="bassBtn">
-                        <i class="fa-solid fa-drum"></i> Bass
-                    </button>
-                    <button id="trebleBtn">
-                        <i class="fa-solid fa-guitar"></i> Treble
-                    </button>
-                    <button id="panningBtn">
-                        <i class="fa-solid fa-arrows-alt-h"></i> Binaural
-                    </button>
+                    <button id="flatBtn"><i class="fa-solid fa-equals"></i> Flat</button>
+                    <button id="bassBtn"><i class="fa-solid fa-drum"></i> Bass</button>
+                    <button id="trebleBtn"><i class="fa-solid fa-guitar"></i> Treble</button>
+                    <button id="panningBtn"><i class="fa-solid fa-arrows-alt-h"></i> Binaural</button>
                 </div>
                 <div class="controls">
-                    <button id="loopBtn">
-                        <i class="fa-solid fa-repeat"></i> Loop
-                    </button>
-                    <button id="pauseBtn">
-                        <i class="fa-solid fa-pause"></i> Pause
-                    </button>
-                    <button id="playAll">
-                        <i class="fa-solid fa-play-circle"></i> Play All
-                    </button>
-                    <button id="stopBtn">
-                        <i class="fa-solid fa-stop"></i> Stop
-                    </button>
+                    <button id="loopBtn"><i class="fa-solid fa-repeat"></i> Loop</button>
+                    <button id="pauseBtn"><i class="fa-solid fa-pause"></i> Pause</button>
+                    <button id="playAll"><i class="fa-solid fa-play-circle"></i> Play All</button>
+                    <button id="stopBtn"><i class="fa-solid fa-stop"></i> Stop</button>
                 </div>
                 <div class="controls">
-                    <button id="prevBtn">
-                        <i class="fa-solid fa-step-backward"></i> Previous
-                    </button>
-                    <button id="playBtn">
-                        <i class="fa-solid fa-play"></i> Play
-                    </button>
-                    <button id="nextBtn">
-                        <i class="fa-solid fa-step-forward"></i> Next
-                    </button>
+                    <button id="prevBtn"><i class="fa-solid fa-step-backward"></i> Previous</button>
+                    <button id="playBtn"><i class="fa-solid fa-play"></i> Play</button>
+                    <button id="nextBtn"><i class="fa-solid fa-step-forward"></i> Next</button>
                 </div>
                 <div id="custom-seekbar">
                     <canvas id="waveformCanvas"></canvas>
-                    <span>
-                    </span>
+                    <span></span>
                     <div id="timeDisplay">
                         <div id="currentTime">00:00</div>/<div id="totalTime">00:00</div>
                     </div>
@@ -356,6 +330,8 @@
         const panningBtn = document.getElementById('panningBtn');
         const seekbar = document.getElementById('custom-seekbar');
         const seekbarSpan = seekbar.querySelector('span');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const loadingText = document.getElementById('loadingText');
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const analyser = audioContext.createAnalyser();
         const canvas = document.getElementById("backgroundCanvas");
@@ -498,23 +474,20 @@
         async function playVideo(index)
         {
             resetVideo();
-            document.getElementById('timeDisplay').style.display = 'none';
-            document.getElementById('loadingText').style.display = 'block';
+            timeDisplay.style.display = 'none';
+            loadingText.style.display = 'block';
             const videoURL = videoSources[index];
             videoElement.src = videoURL;
             const audioBuffer = await processAudioForWaveform(videoURL);
             drawWaveform(audioBuffer);
             videoElement.load();
             videoElement.style.display = 'block';
-            const checkVideoReady = setInterval(() =>
+            videoElement.addEventListener('canplaythrough', function onReady()
             {
-                if (videoElement.readyState >= 4 && videoElement.buffered.length > 0 && videoElement.offsetParent !== null)
-                {
-                    clearInterval(checkVideoReady);
-                    document.getElementById('loadingText').style.display = 'none';
-                    document.getElementById('timeDisplay').style.display = 'block';
-                }
-            }, 1000);
+                loadingText.style.display = 'none';
+                timeDisplay.style.display = 'block';
+                videoElement.removeEventListener('canplaythrough', onReady);
+            });
             videoElement.play();
             currentIndex = index;
             videoSelector.value = currentIndex;
@@ -556,15 +529,14 @@
                 });
                 currentTimeElement.textContent = formatTime(videoElement.currentTime);
             };
-            $(seekbar).on("click", function (e)
+            seekbar.addEventListener('click', function (e)
             {
-                var offset = $(this).offset();
-                var left = (e.pageX - offset.left);
-                var totalWidth = $(this).width();
-                var percentage = (left / totalWidth);
-                var vidTime = videoElement.duration * percentage;
-                videoElement.currentTime = vidTime;
-                seekbarSpan.style.left = percentage + "%";
+                const rect = seekbar.getBoundingClientRect();
+                const left = e.clientX - rect.left;
+                const totalWidth = rect.width;
+                const percentage = left / totalWidth;
+                videoElement.currentTime = videoElement.duration * percentage;
+                seekbarSpan.style.left = (percentage * 100) + "%";
             });
         }
         function setupAudioSource(video)
@@ -741,30 +713,25 @@
         {
             const panner = videoElement.audioNodes.panner;
             if (!panner) return;
-            let startTime = audioContext.currentTime;
             let endPanValue = panDirection === 1 ? 1 : -1;
             let panStep = (endPanValue - panValue) / panDurationInFrames;
             function smoothPan(timestamp)
             {
                 if (panningActive)
                 {
-                    let elapsedTime = timestamp - lastTimestamp;
                     panValue += panStep;
                     panner.positionX.setValueAtTime(panValue, audioContext.currentTime);
                     if ((panDirection === 1 && panValue < 1) || (panDirection === -1 && panValue > -1))
                     {
-                        lastTimestamp = timestamp;
                         requestAnimationFrame(smoothPan);
                     } else
                     {
                         panDirection = panDirection === 1 ? -1 : 1;
                         panValue = panDirection === 1 ? -1 : 1;
-                        lastTimestamp = timestamp;
-                        panAudio();
+                        requestAnimationFrame(smoothPan);
                     }
                 }
             }
-            lastTimestamp = performance.now();
             requestAnimationFrame(smoothPan);
         }
         function stopPanning()
@@ -772,39 +739,41 @@
             const panner = videoElement.audioNodes.panner;
             if (panner) { panner.positionX.setValueAtTime(0, audioContext.currentTime); }
         }
-        document.addEventListener('click', () => { if (audioContext.state === 'suspended') { audioContext.resume(); } });
+        document.addEventListener('click', () =>
+        {
+            if (audioContext.state === 'suspended') { audioContext.resume(); }
+        });
         videoElement.addEventListener('ended', () =>
         {
             if (playAllActive)
             {
-                if (currentIndex < videoSources.length - 1) { playVideo(currentIndex + 1); } else { playVideo(0); }
+                if (currentIndex < videoSources.length - 1) { playVideo(currentIndex + 1); }
+                else { playVideo(0); }
             }
             if (loopActive) { playVideo(currentIndex); }
         });
         stopBtn.addEventListener('click', () =>
         {
             videoElement.src = videoSources[0];
-            document.getElementById('timeDisplay').style.display = 'none';
-            document.getElementById('loadingText').style.display = 'block';
+            timeDisplay.style.display = 'none';
+            loadingText.style.display = 'block';
             videoElement.pause();
             videoElement.currentTime = 0;
             resetVideo();
             playAllActive = false;
             loopActive = false;
-            const checkVideoReady = setInterval(() =>
+            // Use canplaythrough to hide loading text instead of setInterval
+            videoElement.addEventListener('canplaythrough', function onStopReady()
             {
-                if (videoElement.readyState >= 4 && videoElement.buffered.length > 0 && videoElement.offsetParent !== null)
-                {
-                    clearInterval(checkVideoReady);
-                    document.getElementById('loadingText').style.display = 'none';
-                    document.getElementById('timeDisplay').style.display = 'block';
-                }
-            }, 1000);
+                loadingText.style.display = 'none';
+                timeDisplay.style.display = 'block';
+                videoElement.removeEventListener('canplaythrough', onStopReady);
+            });
             videoElement.style.display = 'block';
             videoElement.load();
             currentIndex = 0;
             videoSelector.value = currentIndex;
-            seekbarSpan.style.left = 0 + "%";
+            seekbarSpan.style.left = "0%";
             flatActive = true;
             bassActive = false;
             trebleActive = false;
@@ -818,7 +787,7 @@
             if (panningActive)
             {
                 panDurationInFrames = panDurationInFrames - 10;
-                if (panDurationInFrames < 10) { panDurationInFrames = 10 }
+                if (panDurationInFrames < 10) { panDurationInFrames = 10; }
                 panAudio();
             }
         });
@@ -851,10 +820,24 @@
             playAllActive = false;
             playVideo(currentIndex);
         });
-        prevBtn.addEventListener('click', () => { if (currentIndex > 0) { playVideo(currentIndex - 1); } });
-        nextBtn.addEventListener('click', () => { if (currentIndex < videoSources.length - 1) { playVideo(currentIndex + 1); } });
-        videoSelector.addEventListener('change', () => { const index = parseInt(videoSelector.value, 10); playVideo(index); });
-        playAll.addEventListener('click', () => { playAllActive = true; playVideo(currentIndex); });
+        prevBtn.addEventListener('click', () =>
+        {
+            if (currentIndex > 0) { playVideo(currentIndex - 1); }
+        });
+        nextBtn.addEventListener('click', () =>
+        {
+            if (currentIndex < videoSources.length - 1) { playVideo(currentIndex + 1); }
+        });
+        videoSelector.addEventListener('change', () =>
+        {
+            const index = parseInt(videoSelector.value, 10);
+            playVideo(index);
+        });
+        playAll.addEventListener('click', () =>
+        {
+            playAllActive = true;
+            playVideo(currentIndex);
+        });
         playBtn.addEventListener('click', () => { videoElement.play(); });
         pauseBtn.addEventListener('click', () => { videoElement.pause(); });
         updateVideoSelector();
