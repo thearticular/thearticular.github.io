@@ -325,7 +325,6 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         let currentIndex = 0;
-        let videoCache = new Map();
         let source;
         let playAllActive = false;
         let loopActive = false;
@@ -449,28 +448,6 @@
             "Kurukshetra",
         ];
         const videoNames = rawVideoNames.map((name, index) => `${ index + 1 }/${ rawVideoNames.length } : ${ name }`);
-        async function preloadVideo(index)
-        {
-            if (videoCache.has(index)) return;
-
-            try
-            {
-                const response = await fetch(videoSources[index]);
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-                videoCache.set(index, url);
-            } catch (error)
-            {
-                console.error("Failed to preload video:", error);
-            }
-        }
-        async function preloadRemainingVideos()
-        {
-            for (let i = 1; i < videoSources.length; i++)
-            {
-                preloadVideo(i);
-            }
-        }
         function resetVideo()
         {
             videoElement.pause();
@@ -482,12 +459,6 @@
             resetVideo();
             timeDisplay.style.display = 'none';
             loadingText.style.display = 'block';
-
-            if (!videoCache.has(index))
-            {
-                await preloadVideo(index);
-            }
-            videoElement.src = videoCache.get(index)
             videoElement.src = videoSources[index];
             const audioBuffer = await processAudioForWaveform(videoSources[index]);
             drawWaveform(audioBuffer);
