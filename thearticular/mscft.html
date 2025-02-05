@@ -125,7 +125,6 @@
             transform: translate(-50%, -50%);
             font-size: 15px;
             color: white;
-            display: none;
             font-weight: bold;
             z-index: 3;
         }
@@ -338,7 +337,6 @@
             videoElement.src = videoSources[index];
             videoElement.load();
             videoElement.style.display = 'block';
-            timeDisplay.style.display = 'block';
             videoElement.play();
             currentIndex = index;
             videoSelector.value = currentIndex;
@@ -438,7 +436,10 @@
         playBtn.addEventListener('click', () => { videoElement.play(); });
         pauseBtn.addEventListener('click', () => { videoElement.pause(); });
         updateVideoSelector();
-        playVideo(currentIndex);
+        videoElement.src = videoSources[0];
+        videoElement.load();
+        videoElement.style.display = 'block';
+        updateSeekbar();
     </script>
 </body>
 
