@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en-US">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
@@ -54,10 +55,12 @@
             width: 100%;
             margin: 0;
         }
+
         .wp-block-button__link {
             padding-top: var(--wp--preset--spacing--30);
             padding-bottom: var(--wp--preset--spacing--30);
         }
+
         p {
             font-size: 15px;
             border: 2px solid #fff;
@@ -67,24 +70,29 @@
             margin: 10 auto !important;
             font-weight: bold;
         }
+
         .video-container {
             position: relative;
             margin: 1px;
             aspect-ratio: 1/1;
         }
+
         .video {
             width: 100%;
             display: none;
         }
+
         .controls {
             display: flex;
             justify-content: center;
             align-items: center;
             margin: 1px;
         }
+
         button i {
             margin-right: 8px;
         }
+
         select,
         button {
             background-color: #00000000;
@@ -98,10 +106,12 @@
             font-size: 15px;
             border-radius: 0;
         }
+
         select option {
             background-color: rgb(0, 0, 0);
             border-radius: 0;
         }
+
         #videoSelector {
             text-align: center;
             height: 40px;
@@ -111,6 +121,7 @@
             border-radius: 0;
             font-weight: bold;
         }
+
         #custom-seekbar {
             height: 40px;
             border: 2px solid #fff;
@@ -119,12 +130,14 @@
             align-items: center;
             margin: 0 auto;
         }
+
         #custom-seekbar span {
             background-color: #fff;
             width: 2px;
             height: 100%;
             position: relative;
         }
+
         #timeDisplay {
             text-align: center;
             position: absolute;
@@ -136,8 +149,8 @@
             display: none;
             font-weight: bold;
             z-index: 3;
-            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
         }
+
         #loadingText {
             position: absolute;
             top: 50%;
@@ -146,31 +159,21 @@
             font-size: 15px;
             color: #ffffff;
             z-index: 10;
-            animation: hueRotate 1s infinite linear;
             font-weight: bold;
-            text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
         }
-        @keyframes hueRotate {
-            0% {
-                filter: blur(0);
-            }
-            50% {
-                filter: blur(3px);
-            }
-            100% {
-                filter: blur(0);
-            }
-        }
+
         #currentTime,
         #totalTime {
             display: inline;
         }
+
         #audio-visualizer {
             position: absolute;
             top: 0;
             left: 0;
             z-index: -10;
         }
+
         #backgroundCanvas {
             position: absolute;
             top: 0;
@@ -179,6 +182,7 @@
             height: 100%;
             z-index: -10;
         }
+
         footer {
             color: white;
             font-size: 15px;
@@ -187,6 +191,7 @@
             margin: 1px auto;
             font-weight: bold;
         }
+
         #waveformCanvas {
             position: absolute;
             width: 100%;
@@ -197,6 +202,7 @@
         }
     </style>
 </head>
+
 <body class="singular">
     <canvas id="backgroundCanvas"></canvas>
     <main class="site-main">
@@ -319,6 +325,7 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         let currentIndex = 0;
+        let videoCache = new Map();
         let source;
         let playAllActive = false;
         let loopActive = false;
@@ -442,6 +449,28 @@
             "Kurukshetra",
         ];
         const videoNames = rawVideoNames.map((name, index) => `${ index + 1 }/${ rawVideoNames.length } : ${ name }`);
+        async function preloadVideo(index)
+        {
+            if (videoCache.has(index)) return;
+
+            try
+            {
+                const response = await fetch(videoSources[index]);
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                videoCache.set(index, url);
+            } catch (error)
+            {
+                console.error("Failed to preload video:", error);
+            }
+        }
+        async function preloadRemainingVideos()
+        {
+            for (let i = 1; i < videoSources.length; i++)
+            {
+                preloadVideo(i);
+            }
+        }
         function resetVideo()
         {
             videoElement.pause();
@@ -453,9 +482,14 @@
             resetVideo();
             timeDisplay.style.display = 'none';
             loadingText.style.display = 'block';
-            const videoURL = videoSources[index];
-            videoElement.src = videoURL;
-            const audioBuffer = await processAudioForWaveform(videoURL);
+
+            if (!videoCache.has(index))
+            {
+                await preloadVideo(index);
+            }
+            videoElement.src = videoCache.get(index)
+            videoElement.src = videoSources[index];
+            const audioBuffer = await processAudioForWaveform(videoSources[index]);
             drawWaveform(audioBuffer);
             videoElement.load();
             videoElement.style.display = 'block';
@@ -739,7 +773,6 @@
             resetVideo();
             playAllActive = false;
             loopActive = false;
-            // Use canplaythrough to hide loading text instead of setInterval
             videoElement.addEventListener('canplaythrough', function onStopReady()
             {
                 loadingText.style.display = 'none';
@@ -848,7 +881,7 @@
             const step = Math.ceil(channelData.length / canvasWidth);
             const windowSize = Math.floor(step / 1000);
             waveformCtx.clearRect(0, 0, canvasWidth, waveformCanvas.height);
-            waveformCtx.fillStyle = 'rgba(255,255,255,1)';
+            waveformCtx.fillStyle = 'rgba(255,255,255,0.5)';
             for (let x = 0; x < canvasWidth; x++)
             {
                 let sum = 0;
@@ -870,4 +903,5 @@
         }
     </script>
 </body>
+
 </html>
