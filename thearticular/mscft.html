@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en-US">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="copyright"
+        content="hearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0. All rights reserved.">
+    <meta name="license"
+        content="thearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0. All rights reserved.">
+    <link rel="icon"
+        href="wp-content/uploads/mustat.png"
+        type="image/x-icon">
+    <meta name="description"
+        content="Thearticular Music">
+    <meta name="keywords"
+        content="Thearticular Music">
+    <meta name="author"
+        content="thearticular Music">
+    <meta name="robots"
+        content="index, follow">
+    <meta property="og:title"
+        content="Thearticular Music">
+    <meta property="og:description"
+        content="Thearticular Music">
+    <meta property="og:image"
+        content="https://thearticular.github.io/thearticular/wp-content/uploads/mustat.png">
+    <meta property="og:url"
+        content="https://thearticular.github.io/thearticular/amsc.html">
+    <meta property="og:site_name"
+        content="Thearticular Music">
+    <meta property="og:article:author"
+        content="Thearticular Music">
+    <meta property="og:article:section"
+        content="Thearticular Music">
+    <meta property="og:article:tag"
+        content="Thearticular Music">
+    <meta property="og:type"
+        content="Thearticular Music">
+    <title>Thearticular Music</title>
+    <link rel='stylesheet'
+        href='wp-content/plugins/gutenberg/build/block-library/styleb3b9.css'>
+    <link rel='stylesheet'
+        href='wp-content/themes/hever/stylee2c1.css'>
+    <style>
+        body {
+            --wp--preset--spacing--30: 0.67rem;
+            background-color: #000000;
+            color: rgb(255, 255, 255);
+            overscroll-behavior: none;
+            overflow-x: hidden;
+            width: 100%;
+            margin: 0;
+        }
+
+        .wp-block-button__link {
+            padding-top: var(--wp--preset--spacing--30);
+            padding-bottom: var(--wp--preset--spacing--30);
+        }
+
+
+        .video {
+            width: 100%;
+            display: none;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 1px;
+        }
+
+        select,
+        button {
+            background-color: #00000000;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 0px;
+            height: 40px;
+            margin: 1px;
+            width: 100%;
+            font-weight: bold;
+            font-size: 15px;
+            border-radius: 0;
+        }
+
+        select option {
+            background-color: rgb(0, 0, 0);
+            border-radius: 0;
+        }
+
+        #videoSelector {
+            text-align: center;
+            height: 40px;
+            padding: 0 0px;
+            font-size: 15px;
+            border: 2px solid #fff;
+            border-radius: 0;
+            font-weight: bold;
+        }
+
+        #custom-seekbar {
+            height: 40px;
+            border: 2px solid #fff;
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin: 0 auto;
+        }
+
+        #custom-seekbar span {
+            background-color: #fff;
+            width: 2px;
+            height: 100%;
+            position: relative;
+        }
+
+        #timeDisplay {
+            text-align: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 15px;
+            color: white;
+            display: none;
+            font-weight: bold;
+            z-index: 3;
+        }
+
+        #currentTime,
+        #totalTime {
+            display: inline;
+        }
+
+        footer {
+            color: white;
+            font-size: 15px;
+            text-align: center;
+            width: 100%;
+            margin: 1px auto;
+            font-weight: bold;
+        }
+
+        a {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body class="singular">
+    <main class="site-main">
+        <article class="hentry entry">
+            <header class="entry-header responsive-max-width">
+                <h1 class="entry-title">Music - Faster Page
+                    <footer>thearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0.
+                    </footer>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="wp-block-buttons">
+                    <div
+                        class="wp-block-button has-custom-width wp-block-button__width-100 has-custom-font-size is-style-outline has-small-font-size">
+                        <a class="wp-block-button__link has-background-color has-foreground-background-color has-text-color has-background has-link-color wp-element-button"
+                            href="../index.html">Homepage</a>
+                    </div>
+                </div>
+                <div class="controls">
+                    <a href="amsc.html">
+                        <button>Music</button>
+                    </a>
+                </div>
+                <div class="controls">
+                    <select id="videoSelector">
+                        <option value="">📹 Select Video</option>
+                    </select>
+                </div>
+                <div class="controls">
+                    <button id="loopBtn">Loop</button>
+                    <button id="pauseBtn">Pause</button>
+                    <button id="playAll">Play All</button>
+                    <button id="stopBtn">Stop</button>
+                </div>
+                <div class="controls">
+                    <button id="prevBtn">Previous</button>
+                    <button id="playBtn">Play</button>
+                    <button id="nextBtn">Next</button>
+                </div>
+                <div id="custom-seekbar">
+                    <span></span>
+                    <div id="timeDisplay">
+                        <div id="currentTime">00:00</div>/<div id="totalTime">00:00</div>
+                    </div>
+                </div>
+                <div class="video-container">
+                    <video class="video"
+                        preload="none"></video>
+                </div>
+            </div>
+        </article>
+    </main>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
+    <script>
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        const videoElement = document.querySelector('.video');
+        const videoSelector = document.getElementById('videoSelector');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const playBtn = document.getElementById('playBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const playAll = document.getElementById('playAll');
+        const loopBtn = document.getElementById('loopBtn');
+        const seekbar = document.getElementById('custom-seekbar');
+        const seekbarSpan = seekbar.querySelector('span');
+        let currentIndex = 0;
+        let playAllActive = false;
+        const videoSources = [
+            "wp-content/uploads/govha.mp4",
+            "wp-content/uploads/tandav.mp4",
+            "wp-content/uploads/madhur.mp4",
+            "wp-content/uploads/apatat.mp4",
+            "wp-content/uploads/ninurt.mp4",
+            "wp-content/uploads/monoma.mp4",
+            "wp-content/uploads/monowo.mp4",
+            "wp-content/uploads/ozyma.mp4",
+            "wp-content/uploads/marin.mp4",
+            "wp-content/uploads/shipwre.mp4",
+            "wp-content/uploads/hynile.mp4",
+            "wp-content/uploads/ihavea.mp4",
+            "wp-content/uploads/onlyfl.mp4",
+            "wp-content/uploads/darkda.mp4",
+            "wp-content/uploads/buildh.mp4",
+            "wp-content/uploads/besifen.mp4",
+            "wp-content/uploads/gilgen.mp4",
+            "wp-content/uploads/inana.mp4",
+            "wp-content/uploads/messag.mp4",
+            "wp-content/uploads/drinki.mp4",
+            "wp-content/uploads/deagil.mp4",
+            "wp-content/uploads/harper.mp4",
+            "wp-content/uploads/gayatr.mp4",
+            "wp-content/uploads/nikkal.mp4",
+            "wp-content/uploads/aaroha.mp4",
+            "wp-content/uploads/adyay.mp4",
+            "wp-content/uploads/adyayy.mp4",
+            "wp-content/uploads/yuyut.mp4",
+            "wp-content/uploads/abhim.mp4",
+            "wp-content/uploads/ayas.mp4",
+            "wp-content/uploads/avsh.mp4",
+            "wp-content/uploads/sankh.mp4",
+            "wp-content/uploads/nasd.mp4",
+            "wp-content/uploads/yudh.mp4",
+            "wp-content/uploads/brou.mp4",
+            "wp-content/uploads/rifl.mp4",
+            "wp-content/uploads/carv.mp4",
+            "wp-content/uploads/apart.mp4",
+            "wp-content/uploads/poten.mp4",
+            "wp-content/uploads/crack.mp4",
+            "wp-content/uploads/sands.mp4",
+            "wp-content/uploads/drift.mp4",
+            "wp-content/uploads/vile.mp4",
+            "wp-content/uploads/river.mp4",
+            "wp-content/uploads/falling.mp4",
+            "wp-content/uploads/opposing.mp4",
+            "wp-content/uploads/krishna.mp4",
+            "wp-content/uploads/rain.mp4",
+            "wp-content/uploads/ruins.mp4",
+            "wp-content/uploads/lamen.mp4",
+            "wp-content/uploads/ishta.mp4",
+            "wp-content/uploads/krwa.mp4",
+        ];
+        const rawVideoNames = [
+            "Govinda Hare Gopala Hare",
+            "Shiva Tandav Stotra",
+            "Madhurastakam",
+            "Apatati",
+            "Glory to Ninurta",
+            "Monologue of a Man",
+            "Monologue of a Woman",
+            "Ozymandias",
+            "Rime of the Ancient Mariner",
+            "Story of the Shipwrecked Sailor",
+            "Hymn to Nile",
+            "I Have Arrived Here",
+            "Only Flowers Are Our Adornment",
+            "Dark Days of the Last Month",
+            "Those Who Build Houses",
+            "Beside the Fence Rails",
+            "Gilgamesh, Enkidu and the Nether World",
+            "The Balbale to Inana",
+            "The Message of Lu-Digira to His Mother",
+            "The Drinking Song",
+            "Death of Gilgamesh",
+            "Harpers Song",
+            "Gayatri Mantra Extended",
+            "Hymn to Nikkal",
+            "Aarohanam",
+            "Adyayajna",
+            "Adyayajna 2",
+            "Yuyutso",
+            "Abhimanyu",
+            "Ayaskantiya",
+            "Avshishyate",
+            "Sankhya",
+            "Nasadiya Sukta",
+            "Yudhishthir",
+            "Brought To You By",
+            "Rifle",
+            "Carved",
+            "Apart",
+            "Potential Difference",
+            "Cracks",
+            "Sands",
+            "Drift",
+            "Vile",
+            "Rivers Of Least Resistance",
+            "Falling",
+            "Opposite Poles",
+            "Krishna",
+            "Rain Down",
+            "Ruins",
+            "Lament of Ur",
+            "Ishtar's Descent to the Underworld",
+            "Kurukshetra",
+        ];
+        const videoNames = rawVideoNames.map((name, index) => `${ index + 1 }/${ rawVideoNames.length } : ${ name }`);
+        function resetVideo()
+        {
+            videoElement.pause();
+            videoElement.currentTime = 0;
+            videoElement.style.display = 'none';
+        }
+        async function playVideo(index)
+        {
+            resetVideo();
+            videoElement.src = videoSources[index];
+            videoElement.load();
+            videoElement.style.display = 'block';
+            timeDisplay.style.display = 'block';
+            videoElement.play();
+            currentIndex = index;
+            videoSelector.value = currentIndex;
+            updateSeekbar();
+        }
+        function updateVideoSelector()
+        {
+            videoSelector.innerHTML = '';
+            videoSources.forEach((src, index) =>
+            {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = videoNames[index];
+                videoSelector.appendChild(option);
+            });
+        }
+        function updateSeekbar()
+        {
+            const totalTimeElement = document.getElementById("totalTime");
+            const currentTimeElement = document.getElementById("currentTime");
+            function formatTime(seconds)
+            {
+                const minutes = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${ minutes < 10 ? '0' + minutes : minutes }:${ secs < 10 ? '0' + secs : secs }`;
+            }
+            videoElement.addEventListener('loadedmetadata', function ()
+            {
+                totalTimeElement.textContent = formatTime(videoElement.duration);
+            });
+            videoElement.ontimeupdate = function ()
+            {
+                const percentage = (videoElement.currentTime / videoElement.duration) * 100;
+                requestAnimationFrame(() =>
+                {
+                    seekbarSpan.style.left = percentage + "%";
+                });
+                currentTimeElement.textContent = formatTime(videoElement.currentTime);
+            };
+            seekbar.addEventListener('click', function (e)
+            {
+                const rect = seekbar.getBoundingClientRect();
+                const left = e.clientX - rect.left;
+                const totalWidth = rect.width;
+                const percentage = left / totalWidth;
+                videoElement.currentTime = videoElement.duration * percentage;
+                seekbarSpan.style.left = (percentage * 100) + "%";
+            });
+        }
+        videoElement.addEventListener('ended', () =>
+        {
+            if (playAllActive)
+            {
+                if (currentIndex < videoSources.length - 1) { playVideo(currentIndex + 1); }
+                else { playVideo(0); }
+            }
+            if (loopActive) { playVideo(currentIndex); }
+        });
+        stopBtn.addEventListener('click', () =>
+        {
+            videoElement.src = videoSources[0];
+            videoElement.pause();
+            videoElement.currentTime = 0;
+            resetVideo();
+            playAllActive = false;
+            loopActive = false;
+            videoElement.style.display = 'block';
+            videoElement.load();
+            currentIndex = 0;
+            videoSelector.value = currentIndex;
+            seekbarSpan.style.left = "0%";
+        });
+        loopBtn.addEventListener('click', () =>
+        {
+            loopActive = true;
+            playAllActive = false;
+            playVideo(currentIndex);
+        });
+        prevBtn.addEventListener('click', () =>
+        {
+            if (currentIndex > 0) { playVideo(currentIndex - 1); }
+        });
+        nextBtn.addEventListener('click', () =>
+        {
+            if (currentIndex < videoSources.length - 1) { playVideo(currentIndex + 1); }
+        });
+        videoSelector.addEventListener('change', () =>
+        {
+            const index = parseInt(videoSelector.value, 10);
+            playVideo(index);
+        });
+        playAll.addEventListener('click', () =>
+        {
+            playAllActive = true;
+            playVideo(currentIndex);
+        });
+        playBtn.addEventListener('click', () => { videoElement.play(); });
+        pauseBtn.addEventListener('click', () => { videoElement.pause(); });
+        updateVideoSelector();
+        playVideo(currentIndex);
+    </script>
+</body>
+
+</html>
