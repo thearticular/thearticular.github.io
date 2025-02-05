@@ -249,7 +249,7 @@
                     <div id="timeDisplay">
                         <div id="currentTime">00:00</div>/<div id="totalTime">00:00</div>
                     </div>
-                    <div id="loadingText">Loading Please Wait...</div>
+                    <div id="loadingText">Loading Please Wait</div>
                 </div>
                 <div class="video-container">
                     <video class="video"
@@ -448,6 +448,50 @@
             "Kurukshetra",
         ];
         const videoNames = rawVideoNames.map((name, index) => `${ index + 1 }/${ rawVideoNames.length } : ${ name }`);
+        const preloadLink = document.createElement('link');
+        preloadLink.rel = "preload";
+        preloadLink.as = "video";
+        preloadLink.href = videoSources[0];
+        document.head.appendChild(preloadLink);
+        async function processAudioForWaveform(videoURL)
+        {
+            if (audioBufferCache.has(videoURL))
+            {
+                return audioBufferCache.get(videoURL);
+            }
+            const tempVideo = document.createElement('video');
+            tempVideo.preload = 'metadata';
+            tempVideo.src = videoURL;
+            await new Promise(resolve =>
+            {
+                tempVideo.onloadedmetadata = resolve;
+                tempVideo.play().then(() => tempVideo.pause());
+            });
+            const source = audioContext.createMediaElementSource(tempVideo);
+            const bufferSize = 32;
+            const processor = audioContext.createScriptProcessor(bufferSize, 1, 1);
+            const audioData = [];
+            source.connect(processor);
+            processor.connect(audioContext.destination);
+            return new Promise(resolve =>
+            {
+                processor.onaudioprocess = e =>
+                {
+                    const channel = e.inputBuffer.getChannelData(0);
+                    audioData.push(...channel);
+                };
+                tempVideo.onended = () =>
+                {
+                    const audioBuffer = audioContext.createBuffer(1, audioData.length, audioContext.sampleRate);
+                    audioBuffer.getChannelData(0).set(audioData);
+                    audioBufferCache.set(videoURL, audioBuffer);
+                    resolve(audioBuffer);
+                    source.disconnect();
+                    processor.disconnect();
+                };
+                tempVideo.play();
+            });
+        }
         function resetVideo()
         {
             videoElement.pause();
@@ -460,22 +504,26 @@
             timeDisplay.style.display = 'none';
             loadingText.style.display = 'block';
             videoElement.src = videoSources[index];
-            const audioBuffer = await processAudioForWaveform(videoSources[index]);
-            drawWaveform(audioBuffer);
+            videoElement.preload = 'auto';
             videoElement.load();
+            const [audioBuffer] = await Promise.all([
+                processAudioForWaveform(videoSources[index]),
+                new Promise(resolve =>
+                {
+                    videoElement.oncanplaythrough = resolve;
+                })
+            ]);
+            drawWaveform(audioBuffer);
             videoElement.style.display = 'block';
-            videoElement.addEventListener('canplaythrough', function onReady()
-            {
-                loadingText.style.display = 'none';
-                timeDisplay.style.display = 'block';
-                videoElement.removeEventListener('canplaythrough', onReady);
-            });
+            loadingText.style.display = 'none';
+            timeDisplay.style.display = 'block';
             videoElement.play();
             currentIndex = index;
             videoSelector.value = currentIndex;
             updateSeekbar();
             setupAudioSource(videoElement);
             equalize();
+            preloadVideo(index + 1);
         }
         function updateVideoSelector()
         {
@@ -661,60 +709,49 @@
                 }
             }
         }
+        let animationFrameId;
         function animate()
         {
             updateAmplitude();
-            requestAnimationFrame(animate);
+            animationFrameId = requestAnimationFrame(animate);
         }
+        const gainPresets = {
+            flat: { l: 1.0, m: 1.0, h: 1.0 },
+            bass: { l: 2.5, m: 1.0, h: 1.0 },
+            treble: { l: 1.0, m: 1.0, h: 2.5 }
+        };
         function equalize()
         {
-            if (flatActive)
-            {
-                bassGain = 0;
-                trebleGain = 0;
-                videoElement.audioNodes.lGain.gain.value = 1.0;
-                videoElement.audioNodes.mGain.gain.value = 1.0;
-                videoElement.audioNodes.hGain.gain.value = 1.0;
-            }
-            if (bassActive)
-            {
-                bassGain = bassGain + 1.5;
-                videoElement.audioNodes.lGain.gain.value = bassGain;
-                videoElement.audioNodes.mGain.gain.value = 1.0;
-                videoElement.audioNodes.hGain.gain.value = 1.0;
-            }
-            if (trebleActive)
-            {
-                trebleGain = trebleGain + 1.5;
-                videoElement.audioNodes.lGain.gain.value = 1.0;
-                videoElement.audioNodes.mGain.gain.value = 1.0;
-                videoElement.audioNodes.hGain.gain.value = trebleGain;
-            }
+            const gains = flatActive ? gainPresets.flat :
+                bassActive ? gainPresets.bass :
+                    trebleActive ? gainPresets.treble :
+                        gainPresets.flat;
+            videoElement.audioNodes.lGain.gain.value = gains.l;
+            videoElement.audioNodes.mGain.gain.value = gains.m;
+            videoElement.audioNodes.hGain.gain.value = gains.h;
         }
         function panAudio()
         {
             const panner = videoElement.audioNodes.panner;
             if (!panner) return;
-            let endPanValue = panDirection === 1 ? 1 : -1;
-            let panStep = (endPanValue - panValue) / panDurationInFrames;
-            function smoothPan(timestamp)
+            let startTime = performance.now();
+            const duration = 2000;
+            function animatePan(timestamp)
             {
-                if (panningActive)
+                if (!panningActive) return;
+                const progress = (timestamp - startTime) / duration;
+                panValue = Math.sin(progress * Math.PI * 2);
+                panner.positionX.setValueAtTime(panValue, audioContext.currentTime);
+                if (performance.now() - startTime < duration)
                 {
-                    panValue += panStep;
-                    panner.positionX.setValueAtTime(panValue, audioContext.currentTime);
-                    if ((panDirection === 1 && panValue < 1) || (panDirection === -1 && panValue > -1))
-                    {
-                        requestAnimationFrame(smoothPan);
-                    } else
-                    {
-                        panDirection = panDirection === 1 ? -1 : 1;
-                        panValue = panDirection === 1 ? -1 : 1;
-                        requestAnimationFrame(smoothPan);
-                    }
+                    requestAnimationFrame(animatePan);
+                } else
+                {
+                    startTime = performance.now();
+                    requestAnimationFrame(animatePan);
                 }
             }
-            requestAnimationFrame(smoothPan);
+            requestAnimationFrame(animatePan);
         }
         function stopPanning()
         {
@@ -848,30 +885,33 @@
             waveformCanvas.width = seekbar.offsetWidth;
             waveformCanvas.height = seekbar.offsetHeight;
             const channelData = audioBuffer.getChannelData(0);
-            const canvasWidth = waveformCanvas.width;
-            const step = Math.ceil(channelData.length / canvasWidth);
-            const windowSize = Math.floor(step / 1000);
-            waveformCtx.clearRect(0, 0, canvasWidth, waveformCanvas.height);
+            const step = Math.ceil(channelData.length / waveformCanvas.width) * 1;
+            const windowSize = Math.floor(step / 100);
+            waveformCtx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height);
             waveformCtx.fillStyle = 'rgba(255,255,255,0.5)';
-            for (let x = 0; x < canvasWidth; x++)
+            for (let x = 0; x < waveformCanvas.width; x++)
             {
-                let sum = 0;
-                const start = Math.max(0, x * step - windowSize);
-                const end = Math.min(channelData.length, x * step + windowSize);
+                let max = 0;
+                const start = x * step;
+                const end = Math.min(start + windowSize, channelData.length);
                 for (let i = start; i < end; i++)
                 {
-                    sum += Math.abs(channelData[i]);
+                    if (Math.abs(channelData[i]) > max) max = Math.abs(channelData[i]);
                 }
-                const avg = sum / (end - start);
-                const height = avg * waveformCanvas.height;
-                waveformCtx.fillRect(
-                    x,
-                    (waveformCanvas.height - height) / 2,
-                    1,
-                    height
-                );
+                const height = max * waveformCanvas.height;
+                waveformCtx.fillRect(x, (waveformCanvas.height - height) / 2, 1, height);
             }
         }
+        document.addEventListener('visibilitychange', () =>
+        {
+            if (document.hidden)
+            {
+                cancelAnimationFrame(animationFrameId);
+            } else
+            {
+                animate();
+            }
+        });
     </script>
 </body>
 
