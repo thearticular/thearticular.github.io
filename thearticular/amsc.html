@@ -17,7 +17,7 @@
     <meta name="keywords"
         content="Thearticular Music">
     <meta name="author"
-        content="thearticular Music">
+        content="Thearticular Music">
     <meta name="robots"
         content="index, follow">
     <meta property="og:title"
@@ -148,7 +148,6 @@
             color: white;
             display: none;
             font-weight: bold;
-            z-index: 3;
         }
 
         #loadingText {
@@ -191,19 +190,6 @@
             margin: 1px auto;
             font-weight: bold;
         }
-
-        #waveformCanvas {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            left: 0;
-            top: 0;
-            z-index: 0;
-        }
-
-        a {
-            width: 100%;
-        }
     </style>
 </head>
 
@@ -226,35 +212,52 @@
                     </div>
                 </div>
                 <div class="controls">
-                    <a href="mscft.html">
-                        <button>Music - Faster Page</button>
-                    </a>
-                </div>
-                <div class="controls">
                     <select id="videoSelector">
                         <option value="">📹 Select Video</option>
                     </select>
                 </div>
                 <div class="controls">
-                    <button id="flatBtn"><i class="fa-solid fa-equals"></i> Flat</button>
-                    <button id="bassBtn"><i class="fa-solid fa-drum"></i> Bass</button>
-                    <button id="trebleBtn"><i class="fa-solid fa-guitar"></i> Treble</button>
-                    <button id="panningBtn"><i class="fa-solid fa-arrows-alt-h"></i> Binaural</button>
+                    <button id="flatBtn">
+                        <i class="fa-solid fa-equals"></i> Flat
+                    </button>
+                    <button id="bassBtn">
+                        <i class="fa-solid fa-drum"></i> Bass
+                    </button>
+                    <button id="trebleBtn">
+                        <i class="fa-solid fa-guitar"></i> Treble
+                    </button>
+                    <button id="panningBtn">
+                        <i class="fa-solid fa-arrows-alt-h"></i> Binaural
+                    </button>
                 </div>
                 <div class="controls">
-                    <button id="loopBtn"><i class="fa-solid fa-repeat"></i> Loop</button>
-                    <button id="pauseBtn"><i class="fa-solid fa-pause"></i> Pause</button>
-                    <button id="playAll"><i class="fa-solid fa-play-circle"></i> Play All</button>
-                    <button id="stopBtn"><i class="fa-solid fa-stop"></i> Stop</button>
+                    <button id="loopBtn">
+                        <i class="fa-solid fa-repeat"></i> Loop
+                    </button>
+                    <button id="pauseBtn">
+                        <i class="fa-solid fa-pause"></i> Pause
+                    </button>
+                    <button id="playAll">
+                        <i class="fa-solid fa-play-circle"></i> Play All
+                    </button>
+                    <button id="stopBtn">
+                        <i class="fa-solid fa-stop"></i> Stop
+                    </button>
                 </div>
                 <div class="controls">
-                    <button id="prevBtn"><i class="fa-solid fa-step-backward"></i> Previous</button>
-                    <button id="playBtn"><i class="fa-solid fa-play"></i> Play</button>
-                    <button id="nextBtn"><i class="fa-solid fa-step-forward"></i> Next</button>
+                    <button id="prevBtn">
+                        <i class="fa-solid fa-step-backward"></i> Previous
+                    </button>
+                    <button id="playBtn">
+                        <i class="fa-solid fa-play"></i> Play
+                    </button>
+                    <button id="nextBtn">
+                        <i class="fa-solid fa-step-forward"></i> Next
+                    </button>
                 </div>
                 <div id="custom-seekbar">
-                    <canvas id="waveformCanvas"></canvas>
-                    <span></span>
+                    <span>
+                    </span>
                     <div id="timeDisplay">
                         <div id="currentTime">00:00</div>/<div id="totalTime">00:00</div>
                     </div>
@@ -262,7 +265,7 @@
                 </div>
                 <div class="video-container">
                     <video class="video"
-                        preload="auto"></video>
+                        preload="none"></video>
                 </div>
                 <p class="has-text-align-center">
                     <u>About</u><br>
@@ -322,15 +325,10 @@
         const panningBtn = document.getElementById('panningBtn');
         const seekbar = document.getElementById('custom-seekbar');
         const seekbarSpan = seekbar.querySelector('span');
-        const timeDisplay = document.getElementById('timeDisplay');
-        const loadingText = document.getElementById('loadingText');
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const analyser = audioContext.createAnalyser();
         const canvas = document.getElementById("backgroundCanvas");
         const ctx = canvas.getContext("2d");
-        const waveformCanvas = document.getElementById('waveformCanvas');
-        const waveformCtx = waveformCanvas.getContext('2d');
-        let audioBufferCache = new Map();
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         let currentIndex = 0;
@@ -457,82 +455,35 @@
             "Kurukshetra",
         ];
         const videoNames = rawVideoNames.map((name, index) => `${ index + 1 }/${ rawVideoNames.length } : ${ name }`);
-        const preloadLink = document.createElement('link');
-        preloadLink.rel = "preload";
-        preloadLink.as = "video";
-        preloadLink.href = videoSources[0];
-        document.head.appendChild(preloadLink);
-        async function processAudioForWaveform(videoURL)
-        {
-            if (audioBufferCache.has(videoURL))
-            {
-                return audioBufferCache.get(videoURL);
-            }
-            const tempVideo = document.createElement('video');
-            tempVideo.preload = 'metadata';
-            tempVideo.src = videoURL;
-            await new Promise(resolve =>
-            {
-                tempVideo.onloadedmetadata = resolve;
-                tempVideo.play().then(() => tempVideo.pause());
-            });
-            const source = audioContext.createMediaElementSource(tempVideo);
-            const bufferSize = 32;
-            const processor = audioContext.createScriptProcessor(bufferSize, 1, 1);
-            const audioData = [];
-            source.connect(processor);
-            processor.connect(audioContext.destination);
-            return new Promise(resolve =>
-            {
-                processor.onaudioprocess = e =>
-                {
-                    const channel = e.inputBuffer.getChannelData(0);
-                    audioData.push(...channel);
-                };
-                tempVideo.onended = () =>
-                {
-                    const audioBuffer = audioContext.createBuffer(1, audioData.length, audioContext.sampleRate);
-                    audioBuffer.getChannelData(0).set(audioData);
-                    audioBufferCache.set(videoURL, audioBuffer);
-                    resolve(audioBuffer);
-                    source.disconnect();
-                    processor.disconnect();
-                };
-                tempVideo.play();
-            });
-        }
         function resetVideo()
         {
             videoElement.pause();
             videoElement.currentTime = 0;
             videoElement.style.display = 'none';
         }
-        async function playVideo(index)
+        function playVideo(index)
         {
             resetVideo();
-            timeDisplay.style.display = 'none';
-            loadingText.style.display = 'block';
+            document.getElementById('timeDisplay').style.display = 'none';
+            document.getElementById('loadingText').style.display = 'block';
             videoElement.src = videoSources[index];
-            videoElement.preload = 'auto';
             videoElement.load();
-            const [audioBuffer] = await Promise.all([
-                processAudioForWaveform(videoSources[index]),
-                new Promise(resolve =>
-                {
-                    videoElement.oncanplaythrough = resolve;
-                })
-            ]);
-            drawWaveform(audioBuffer);
             videoElement.style.display = 'block';
-            loadingText.style.display = 'none';
-            timeDisplay.style.display = 'block';
+            const checkVideoReady = setInterval(() =>
+            {
+                if (videoElement.readyState >= 4 && videoElement.buffered.length > 0 && videoElement.offsetParent !== null)
+                {
+                    clearInterval(checkVideoReady);
+                    document.getElementById('loadingText').style.display = 'none';
+                    document.getElementById('timeDisplay').style.display = 'block';
+                }
+            }, 1000);
             videoElement.play();
             currentIndex = index;
             videoSelector.value = currentIndex;
             updateSeekbar();
             setupAudioSource(videoElement);
             equalize();
-            preloadVideo(index + 1);
         }
         function updateVideoSelector()
         {
@@ -718,84 +669,99 @@
                 }
             }
         }
-        let animationFrameId;
         function animate()
         {
             updateAmplitude();
-            animationFrameId = requestAnimationFrame(animate);
+            requestAnimationFrame(animate);
         }
-        const gainPresets = {
-            flat: { l: 1.0, m: 1.0, h: 1.0 },
-            bass: { l: 2.5, m: 1.0, h: 1.0 },
-            treble: { l: 1.0, m: 1.0, h: 2.5 }
-        };
         function equalize()
         {
-            const gains = flatActive ? gainPresets.flat :
-                bassActive ? gainPresets.bass :
-                    trebleActive ? gainPresets.treble :
-                        gainPresets.flat;
-            videoElement.audioNodes.lGain.gain.value = gains.l;
-            videoElement.audioNodes.mGain.gain.value = gains.m;
-            videoElement.audioNodes.hGain.gain.value = gains.h;
+            if (flatActive)
+            {
+                bassGain = 0;
+                trebleGain = 0;
+                videoElement.audioNodes.lGain.gain.value = 1.0;
+                videoElement.audioNodes.mGain.gain.value = 1.0;
+                videoElement.audioNodes.hGain.gain.value = 1.0;
+            }
+            if (bassActive)
+            {
+                bassGain = bassGain + 1.5;
+                videoElement.audioNodes.lGain.gain.value = bassGain;
+                videoElement.audioNodes.mGain.gain.value = 1.0;
+                videoElement.audioNodes.hGain.gain.value = 1.0;
+            }
+            if (trebleActive)
+            {
+                trebleGain = trebleGain + 1.5;
+                videoElement.audioNodes.lGain.gain.value = 1.0;
+                videoElement.audioNodes.mGain.gain.value = 1.0;
+                videoElement.audioNodes.hGain.gain.value = trebleGain;
+            }
         }
         function panAudio()
         {
             const panner = videoElement.audioNodes.panner;
             if (!panner) return;
-            let startTime = performance.now();
-            const duration = 2000;
-            function animatePan(timestamp)
+            let startTime = audioContext.currentTime;
+            let endPanValue = panDirection === 1 ? 1 : -1;
+            let panStep = (endPanValue - panValue) / panDurationInFrames;
+            function smoothPan(timestamp)
             {
-                if (!panningActive) return;
-                const progress = (timestamp - startTime) / duration;
-                panValue = Math.sin(progress * Math.PI * 2);
-                panner.positionX.setValueAtTime(panValue, audioContext.currentTime);
-                if (performance.now() - startTime < duration)
+                if (panningActive)
                 {
-                    requestAnimationFrame(animatePan);
-                } else
-                {
-                    startTime = performance.now();
-                    requestAnimationFrame(animatePan);
+                    let elapsedTime = timestamp - lastTimestamp;
+                    panValue += panStep;
+                    panner.positionX.setValueAtTime(panValue, audioContext.currentTime);
+                    if ((panDirection === 1 && panValue < 1) || (panDirection === -1 && panValue > -1))
+                    {
+                        lastTimestamp = timestamp;
+                        requestAnimationFrame(smoothPan);
+                    } else
+                    {
+                        panDirection = panDirection === 1 ? -1 : 1;
+                        panValue = panDirection === 1 ? -1 : 1;
+                        lastTimestamp = timestamp;
+                        panAudio();
+                    }
                 }
             }
-            requestAnimationFrame(animatePan);
+            lastTimestamp = performance.now();
+            requestAnimationFrame(smoothPan);
         }
         function stopPanning()
         {
             const panner = videoElement.audioNodes.panner;
             if (panner) { panner.positionX.setValueAtTime(0, audioContext.currentTime); }
         }
-        document.addEventListener('click', () =>
-        {
-            if (audioContext.state === 'suspended') { audioContext.resume(); }
-        });
+        document.addEventListener('click', () => { if (audioContext.state === 'suspended') { audioContext.resume(); } });
         videoElement.addEventListener('ended', () =>
         {
             if (playAllActive)
             {
-                if (currentIndex < videoSources.length - 1) { playVideo(currentIndex + 1); }
-                else { playVideo(0); }
+                if (currentIndex < videoSources.length - 1) { playVideo(currentIndex + 1); } else { playVideo(0); }
             }
             if (loopActive) { playVideo(currentIndex); }
         });
         stopBtn.addEventListener('click', () =>
         {
             videoElement.src = videoSources[0];
-            timeDisplay.style.display = 'none';
-            loadingText.style.display = 'block';
+            document.getElementById('timeDisplay').style.display = 'none';
+            document.getElementById('loadingText').style.display = 'block';
             videoElement.pause();
             videoElement.currentTime = 0;
             resetVideo();
             playAllActive = false;
             loopActive = false;
-            videoElement.addEventListener('canplaythrough', function onStopReady()
+            const checkVideoReady = setInterval(() =>
             {
-                loadingText.style.display = 'none';
-                timeDisplay.style.display = 'block';
-                videoElement.removeEventListener('canplaythrough', onStopReady);
-            });
+                if (videoElement.readyState >= 4 && videoElement.buffered.length > 0 && videoElement.offsetParent !== null)
+                {
+                    clearInterval(checkVideoReady);
+                    document.getElementById('loadingText').style.display = 'none';
+                    document.getElementById('timeDisplay').style.display = 'block';
+                }
+            }, 1000);
             videoElement.style.display = 'block';
             videoElement.load();
             currentIndex = 0;
@@ -814,7 +780,7 @@
             if (panningActive)
             {
                 panDurationInFrames = panDurationInFrames - 10;
-                if (panDurationInFrames < 10) { panDurationInFrames = 10; }
+                if (panDurationInFrames < 10) { panDurationInFrames = 10 }
                 panAudio();
             }
         });
@@ -847,80 +813,15 @@
             playAllActive = false;
             playVideo(currentIndex);
         });
-        prevBtn.addEventListener('click', () =>
-        {
-            if (currentIndex > 0) { playVideo(currentIndex - 1); }
-        });
-        nextBtn.addEventListener('click', () =>
-        {
-            if (currentIndex < videoSources.length - 1) { playVideo(currentIndex + 1); }
-        });
-        videoSelector.addEventListener('change', () =>
-        {
-            const index = parseInt(videoSelector.value, 10);
-            playVideo(index);
-        });
-        playAll.addEventListener('click', () =>
-        {
-            playAllActive = true;
-            playVideo(currentIndex);
-        });
+        prevBtn.addEventListener('click', () => { if (currentIndex > 0) { playVideo(currentIndex - 1); } });
+        nextBtn.addEventListener('click', () => { if (currentIndex < videoSources.length - 1) { playVideo(currentIndex + 1); } });
+        videoSelector.addEventListener('change', () => { const index = parseInt(videoSelector.value, 10); playVideo(index); });
+        playAll.addEventListener('click', () => { playAllActive = true; playVideo(currentIndex); });
         playBtn.addEventListener('click', () => { videoElement.play(); });
         pauseBtn.addEventListener('click', () => { videoElement.pause(); });
         updateVideoSelector();
         playVideo(currentIndex);
         animate();
-        async function processAudioForWaveform(videoURL)
-        {
-            if (audioBufferCache.has(videoURL))
-            {
-                return audioBufferCache.get(videoURL);
-            }
-            const videoBlob = await new Promise(resolve =>
-            {
-                const xhr = new XMLHttpRequest();
-                xhr.open('GET', videoURL);
-                xhr.responseType = 'blob';
-                xhr.onload = () => resolve(xhr.response);
-                xhr.send();
-            });
-            const arrayBuffer = await videoBlob.arrayBuffer();
-            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-            audioBufferCache.set(videoURL, audioBuffer);
-            return audioBuffer;
-        }
-        function drawWaveform(audioBuffer)
-        {
-            waveformCanvas.width = seekbar.offsetWidth;
-            waveformCanvas.height = seekbar.offsetHeight;
-            const channelData = audioBuffer.getChannelData(0);
-            const step = Math.ceil(channelData.length / waveformCanvas.width) * 1;
-            const windowSize = Math.floor(step / 100);
-            waveformCtx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height);
-            waveformCtx.fillStyle = 'rgba(255,255,255,0.5)';
-            for (let x = 0; x < waveformCanvas.width; x++)
-            {
-                let max = 0;
-                const start = x * step;
-                const end = Math.min(start + windowSize, channelData.length);
-                for (let i = start; i < end; i++)
-                {
-                    if (Math.abs(channelData[i]) > max) max = Math.abs(channelData[i]);
-                }
-                const height = max * waveformCanvas.height;
-                waveformCtx.fillRect(x, (waveformCanvas.height - height) / 2, 1, height);
-            }
-        }
-        document.addEventListener('visibilitychange', () =>
-        {
-            if (document.hidden)
-            {
-                cancelAnimationFrame(animationFrameId);
-            } else
-            {
-                animate();
-            }
-        });
     </script>
 </body>
 
