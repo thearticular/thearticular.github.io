@@ -131,7 +131,7 @@
             margin: 0 auto;
         }
 
-        #custom-seekbar span {
+        #seekbarProgress {
             background-color: #fff;
             width: 2px;
             height: 100%;
@@ -265,8 +265,7 @@
                     </button>
                 </div>
                 <div id="custom-seekbar">
-                    <span>
-                    </span>
+                    <div id="seekbarProgress"></div>
                     <div id="timeDisplay">
                         <div id="currentTime">00:00</div>/<div id="totalTime">00:00</div>
                     </div>
@@ -333,7 +332,7 @@
         const trebleBtn = document.getElementById('trebleBtn');
         const panningBtn = document.getElementById('panningBtn');
         const seekbar = document.getElementById('custom-seekbar');
-        const seekbarSpan = seekbar.querySelector('span');
+        const seekbarProgress = document.getElementById('seekbarProgress');
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const analyser = audioContext.createAnalyser();
         const canvas = document.getElementById("backgroundCanvas");
@@ -524,7 +523,7 @@
                 const percentage = (videoElement.currentTime / videoElement.duration) * 100;
                 requestAnimationFrame(() =>
                 {
-                    seekbarSpan.style.left = percentage + "%";
+                    seekbarProgress.style.left = percentage + "%";
                 });
                 currentTimeElement.textContent = formatTime(videoElement.currentTime);
             };
@@ -535,7 +534,7 @@
                 const totalWidth = rect.width;
                 const percentage = left / totalWidth;
                 videoElement.currentTime = videoElement.duration * percentage;
-                seekbarSpan.style.left = (percentage * 100) + "%";
+                seekbarProgress.style.left = (percentage * 100) + "%";
             });
         }
         function setupAudioSource(video)
@@ -775,7 +774,7 @@
             videoElement.load();
             currentIndex = 0;
             videoSelector.value = currentIndex;
-            seekbarSpan.style.left = "0%";
+            seekbarProgress.style.left = "0%";
             flatActive = true;
             bassActive = false;
             trebleActive = false;
