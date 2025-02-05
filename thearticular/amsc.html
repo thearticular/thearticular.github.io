@@ -877,26 +877,27 @@
             waveformCanvas.width = seekbar.offsetWidth;
             waveformCanvas.height = seekbar.offsetHeight;
             const channelData = audioBuffer.getChannelData(0);
-            const step = Math.ceil(channelData.length / waveformCanvas.width);
-            waveformCtx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height);
+            const canvasWidth = waveformCanvas.width;
+            const step = Math.floor(channelData.length / canvasWidth);
+            waveformCtx.clearRect(0, 0, canvasWidth, waveformCanvas.height);
             waveformCtx.strokeStyle = '#ffffff';
             waveformCtx.lineWidth = 1;
-            for (let x = 0; x < waveformCanvas.width; x++)
+            const midY = waveformCanvas.height / 2;
+            for (let x = 0; x < canvasWidth; x++)
             {
-                const start = Math.floor(x * step);
-                const end = Math.floor((x + 1) * step);
-                const slice = channelData.slice(start, end);
-                const min = Math.min(...slice);
-                const max = Math.max(...slice);
-                const scale = 1;
-                const exponent = 2;
-                const mid = waveformCanvas.height / 2;
-                const transform = (value) => Math.sign(value) * Math.pow(Math.abs(value), exponent);
-                const yMin = mid + (transform(min) * mid * scale);
-                const yMax = mid + (transform(max) * mid * scale);
+                let min = 1.0;
+                let max = -1.0;
+                const start = x * step;
+                const end = Math.min(start + step, channelData.length);
+                for (let i = start; i < end; i++)
+                {
+                    const sample = channelData[i];
+                    if (sample < min) min = sample;
+                    if (sample > max) max = sample;
+                }
                 waveformCtx.beginPath();
-                waveformCtx.moveTo(x, yMin);
-                waveformCtx.lineTo(x, yMax);
+                waveformCtx.moveTo(x, midY + min * midY);
+                waveformCtx.lineTo(x, midY + max * midY);
                 waveformCtx.stroke();
             }
         }
