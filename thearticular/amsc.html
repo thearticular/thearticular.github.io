@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="copyright"
         content="hearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0. All rights reserved.">
     <meta name="license"
@@ -56,6 +56,10 @@
             margin: 0;
         }
 
+        :root {
+            --safe-area-inset-bottom: env(safe-area-inset-bottom);
+        }
+
         .wp-block-button__link {
             padding-top: var(--wp--preset--spacing--30);
             padding-bottom: var(--wp--preset--spacing--30);
@@ -71,7 +75,6 @@
 
         .video-container {
             position: relative;
-            margin: 1px;
             aspect-ratio: 1/1;
         }
 
@@ -170,6 +173,8 @@
             position: fixed;
             top: 0;
             left: 0;
+            right: 0;
+            bottom: 0;
             z-index: -10;
             width: 100vw;
             height: 100vh;
@@ -647,6 +652,13 @@
             const averageAmplitude = sum / bufferLength / 2;
             draw(averageAmplitude);
         }
+        function resizeCanvas()
+        {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
         function draw(amplitude)
         {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -658,12 +670,19 @@
             const glowSize = baseGlowSize + extraGlow;
             const baseAlpha = 0;
             const glowAlpha = Math.min(0.6, baseAlpha + amplitude * 1);
+            const safeAreaBottom = parseFloat(getComputedStyle(document.documentElement)
+                .getPropertyValue('--safe-area-inset-bottom')) || 0;
             let topGradient = ctx.createLinearGradient(rect.x, rect.y - glowSize, rect.x, rect.y);
             topGradient.addColorStop(0, "rgba(255,255,255,0)");
             topGradient.addColorStop(1, `rgba(255,255,255,${ glowAlpha })`);
             ctx.fillStyle = topGradient;
             ctx.fillRect(rect.x, rect.y - glowSize, rect.width, glowSize);
-            let bottomGradient = ctx.createLinearGradient(rect.x, rect.y + rect.height, rect.x, rect.y + rect.height + glowSize);
+            let bottomGradient = ctx.createLinearGradient(
+                rect.x,
+                rect.y + rect.height,
+                rect.x,
+                rect.y + rect.height + glowSize + safeAreaBottom
+            );
             bottomGradient.addColorStop(0, `rgba(255,255,255,${ glowAlpha })`);
             bottomGradient.addColorStop(1, "rgba(255,255,255,0)");
             ctx.fillStyle = bottomGradient;
