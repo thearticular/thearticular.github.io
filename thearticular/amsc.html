@@ -642,7 +642,7 @@
             let sum = 0;
             for (let i = 0; i < bufferLength; i++) { sum += dataArray[i]; }
             const averageAmplitude = sum / bufferLength / 2;
-            drawCircles(averageAmplitude);
+            draw(averageAmplitude);
         }
         function createTrianglePath(centerX, centerY, radius)
         {
@@ -653,7 +653,7 @@
             trianglePath.lineTo(centerX + radius * Math.cos(angle), centerY + radius * 0.5);
             trianglePath.closePath();
         }
-        function drawCircles(amplitude)
+        function draw(amplitude)
         {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             const centerX = canvas.width / 2;
