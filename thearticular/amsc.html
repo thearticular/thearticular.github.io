@@ -254,6 +254,8 @@
                     </button>
                 </div>
                 <div id="custom-seekbar">
+                    <canvas id="waveform-canvas"
+                        style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 100%; height: 80%; pointer-events: none;"></canvas>
                     <div id="seekbarProgress"></div>
                     <div id="timeDisplay">
                         <div id="currentTime">00:00</div>/<div id="totalTime">00:00</div>
@@ -326,6 +328,7 @@
         const analyser = audioContext.createAnalyser();
         const canvas = document.getElementById("backgroundCanvas");
         const ctx = canvas.getContext("2d");
+        const waveformCache = {};
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         let currentIndex = 0;
@@ -343,6 +346,7 @@
         let lastTimestamp = 0;
         let panDurationInFrames = 100;
         let hue = 0;
+        let worker;
         const videoSources = [
             "wp-content/uploads/govha.mp4",
             "wp-content/uploads/tandav.mp4",
@@ -458,7 +462,7 @@
             videoElement.currentTime = 0;
             videoElement.style.display = 'none';
         }
-        function playVideo(index)
+        async function playVideo(index)
         {
             resetVideo();
             document.getElementById('timeDisplay').style.display = 'none';
@@ -479,6 +483,23 @@
             currentIndex = index;
             videoSelector.value = currentIndex;
             updateSeekbar();
+            if (waveformCache[videoSources[index]])
+            {
+                drawWaveform(waveformCache[videoSources[index]]);
+            }
+            else
+            {
+                try
+                {
+                    const audioData = await getAudioData(videoSources[index]);
+                    const downsampledData = downsample(audioData, seekbar.offsetWidth);
+                    waveformCache[videoSources[index]] = downsampledData;
+                    drawWaveform(downsampledData);
+                }
+                catch (error)
+                {
+                }
+            }
             setupAudioSource(videoElement);
             equalize();
         }
@@ -678,9 +699,19 @@
         {
             if (playAllActive)
             {
-                if (currentIndex < videoSources.length - 1) { playVideo(currentIndex + 1); } else { playVideo(0); }
+                if (currentIndex < videoSources.length - 1) 
+                {
+                    playVideo(currentIndex + 1);
+                }
+                else 
+                {
+                    playVideo(0);
+                }
             }
-            if (loopActive) { playVideo(currentIndex); }
+            if (loopActive) 
+            {
+                playVideo(currentIndex);
+            }
         });
         stopBtn.addEventListener('click', () =>
         {
@@ -761,6 +792,49 @@
         updateVideoSelector();
         playVideo(currentIndex);
         animate();
+        async function getAudioData(url)
+        {
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            const audioContext = new OfflineAudioContext(1, arrayBuffer.byteLength, 5000);
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            return audioBuffer.getChannelData(0);
+        }
+        function downsample(data, targetSamples)
+        {
+            const sampleSize = Math.floor(data.length / targetSamples);
+            const downsampledData = [];
+
+            for (let i = 0; i < targetSamples; i++)
+            {
+                let blockStart = i * sampleSize;
+                let blockEnd = blockStart + sampleSize;
+                let sum = 0;
+                for (let j = blockStart; j < blockEnd; j++)
+                {
+                    sum += Math.abs(data[j]);
+                }
+                downsampledData.push(sum / sampleSize);
+            }
+            return downsampledData;
+        }
+        function drawWaveform(data)
+        {
+            const canvas = document.getElementById('waveform-canvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const halfHeight = height / 2;
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = 'red';
+            const barWidth = width / data.length;
+            for (let i = 0; i < data.length; i++)
+            {
+                const barHeight = data[i] * halfHeight * 4;
+                ctx.fillRect(i * barWidth, halfHeight - barHeight, barWidth, barHeight);
+                ctx.fillRect(i * barWidth, halfHeight, barWidth, barHeight);
+            }
+        }
     </script>
 </body>
 
