@@ -470,15 +470,12 @@
             videoElement.src = videoSources[index];
             videoElement.load();
             videoElement.style.display = 'block';
-            const checkVideoReady = setInterval(() =>
+            videoElement.addEventListener('canplaythrough', function onCanPlay()
             {
-                if (videoElement.readyState >= 4 && videoElement.buffered.length > 0 && videoElement.offsetParent !== null)
-                {
-                    clearInterval(checkVideoReady);
-                    document.getElementById('loadingText').style.display = 'none';
-                    document.getElementById('timeDisplay').style.display = 'block';
-                }
-            }, 1000);
+                document.getElementById('loadingText').style.display = 'none';
+                document.getElementById('timeDisplay').style.display = 'block';
+                videoElement.removeEventListener('canplaythrough', onCanPlay);
+            });
             videoElement.play();
             currentIndex = index;
             videoSelector.value = currentIndex;
@@ -492,12 +489,28 @@
                 try
                 {
                     const audioData = await getAudioData(videoSources[index]);
-                    const downsampledData = downsample(audioData, seekbar.offsetWidth);
-                    waveformCache[videoSources[index]] = downsampledData;
-                    drawWaveform(downsampledData);
-                }
-                catch (error)
+                    if (window.Worker)
+                    {
+                        if (!worker)
+                        {
+                            worker = new Worker('wp-content/layers/worker.js');
+                        }
+                        worker.onmessage = function (e)
+                        {
+                            waveformCache[videoSources[index]] = e.data.downsampledData;
+                            drawWaveform(e.data.downsampledData);
+                        };
+                        worker.postMessage({ data: audioData, targetSamples: seekbar.offsetWidth });
+                    }
+                    else
+                    {
+                        const downsampledData = downsample(audioData, seekbar.offsetWidth);
+                        waveformCache[videoSources[index]] = downsampledData;
+                        drawWaveform(downsampledData);
+                    }
+                } catch (error)
                 {
+                    console.error("Error processing audio data:", error);
                 }
             }
             setupAudioSource(videoElement);
@@ -528,14 +541,24 @@
             {
                 totalTimeElement.textContent = formatTime(videoElement.duration);
             });
+            let animationFrameScheduled = false;
             videoElement.ontimeupdate = function ()
             {
-                const percentage = (videoElement.currentTime / videoElement.duration) * 100;
-                requestAnimationFrame(() =>
+                if (!animationFrameScheduled)
                 {
-                    seekbarProgress.style.left = percentage + "%";
-                });
-                currentTimeElement.textContent = formatTime(videoElement.currentTime);
+                    animationFrameScheduled = true;
+                    requestAnimationFrame(() =>
+                    {
+                        const percentage = (videoElement.currentTime / videoElement.duration) * 100;
+                        requestAnimationFrame(() =>
+                        {
+                            seekbarProgress.style.left = percentage + "%";
+                            currentTimeElement.textContent = formatTime(videoElement.currentTime);
+                        });
+                        currentTimeElement.textContent = formatTime(videoElement.currentTime);
+                        animationFrameScheduled = false;
+                    });
+                }
             };
             seekbar.addEventListener('click', function (e)
             {
@@ -607,14 +630,14 @@
         function drawCircles(amplitude)
         {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
             for (let i = 0; i < 5; i++)
             {
-                ctx.lineWidth = 2;
-                ctx.beginPath();
                 let radius = Math.min(canvas.width, canvas.height) * 0.2 * i + amplitude / 0.3;
-                let centerX = canvas.width / 2;
-                let centerY = canvas.height / 2;
-                let triangleHeight = radius * Math.sqrt(1) / 1;
+                let triangleHeight = radius * Math.sqrt(1);
                 let x1 = centerX;
                 let y1 = centerY - radius;
                 let x2 = centerX - radius * Math.cos(Math.PI / 6);
@@ -625,9 +648,9 @@
                 ctx.lineTo(x2, y2);
                 ctx.lineTo(x3, y3);
                 ctx.closePath();
-                ctx.strokeStyle = `hsla(0, 0%, 100%, ${ (1 - i / 5) * 0.5 })`;
-                ctx.stroke();
             }
+            ctx.strokeStyle = `hsla(0, 0%, 100%, 0.5)`;
+            ctx.stroke();
         }
         function animate()
         {
@@ -804,7 +827,6 @@
         {
             const sampleSize = Math.floor(data.length / targetSamples);
             const downsampledData = [];
-
             for (let i = 0; i < targetSamples; i++)
             {
                 let blockStart = i * sampleSize;
