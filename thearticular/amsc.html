@@ -644,9 +644,9 @@
             const averageAmplitude = sum / bufferLength / 2;
             drawCircles(averageAmplitude);
         }
-        const trianglePath = new Path2D();
         function createTrianglePath(centerX, centerY, radius)
         {
+            const trianglePath = new Path2D();
             const angle = Math.PI / 6;
             trianglePath.moveTo(centerX, centerY - radius);
             trianglePath.lineTo(centerX - radius * Math.cos(angle), centerY + radius * 0.5);
