@@ -478,41 +478,46 @@
             currentIndex = index;
             videoSelector.value = currentIndex;
             updateSeekbar();
-            if (waveformCache[videoSources[index]])
-            {
-                drawWaveform(waveformCache[videoSources[index]]);
-            }
-            else
-            {
-                try
-                {
-                    const audioData = await getAudioData(videoSources[index]);
-                    if (window.Worker)
-                    {
-                        if (!worker)
-                        {
-                            worker = new Worker('wp-content/layers/worker.js');
-                        }
-                        worker.onmessage = function (e)
-                        {
-                            waveformCache[videoSources[index]] = e.data.downsampledData;
-                            drawWaveform(e.data.downsampledData);
-                        };
-                        worker.postMessage({ data: audioData, targetSamples: seekbar.offsetWidth });
-                    }
-                    else
-                    {
-                        const downsampledData = downsample(audioData, seekbar.offsetWidth);
-                        waveformCache[videoSources[index]] = downsampledData;
-                        drawWaveform(downsampledData);
-                    }
-                } catch (error)
-                {
-                    console.error("Error processing audio data:", error);
-                }
-            }
+            processAudio(index);
             setupAudioSource(videoElement);
             equalize();
+        }
+        async function processAudio(index)
+        {
+            const source = videoSources[index];
+
+            if (waveformCache[source])
+            {
+                drawWaveform(waveformCache[source]);
+                return;
+            }
+            try
+            {
+                const audioData = await getAudioData(source);
+                if (window.Worker)
+                {
+                    if (!worker)
+                    {
+                        worker = new Worker('wp-content/layers/worker.js');
+                    }
+                    worker.onmessage = function (e)
+                    {
+                        waveformCache[source] = e.data.downsampledData;
+                        drawWaveform(e.data.downsampledData);
+                    };
+                    worker.postMessage({ data: audioData, targetSamples: seekbar.offsetWidth });
+                }
+                else
+                {
+                    const downsampledData = downsample(audioData, seekbar.offsetWidth);
+                    waveformCache[source] = downsampledData;
+                    drawWaveform(downsampledData);
+                }
+            }
+            catch (error)
+            {
+                console.error("Error processing audio data:", error);
+            }
         }
         function updateVideoSelector()
         {
@@ -824,14 +829,13 @@
         {
             const response = await fetch(url);
             const arrayBuffer = await response.arrayBuffer();
-            const audioContext = new OfflineAudioContext(1, arrayBuffer.byteLength, 5000);
-            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-            return audioBuffer.getChannelData(0);
+            const audioContext = new OfflineAudioContext({ numberOfChannels: 1, length: arrayBuffer.byteLength, sampleRate: 5000 });
+            return (await audioContext.decodeAudioData(arrayBuffer)).getChannelData(0);
         }
         function downsample(data, targetSamples)
         {
-            const step = Math.floor(data.length / targetSamples);
-            return Array.from({ length: targetSamples }, (_, i) => Math.abs(data[i * step]));
+            const step = data.length / targetSamples;
+            return Float32Array.from({ length: targetSamples }, (_, i) => Math.abs(data[Math.floor(i * step)]));
         }
         function drawWaveform(data)
         {
@@ -840,14 +844,17 @@
             const width = canvas.width;
             const height = canvas.height;
             const halfHeight = height / 2;
-            ctx.clearRect(0, 0, width, height);
-            ctx.fillStyle = 'grey';
             const barWidth = width / data.length;
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = 'white';
             for (let i = 0; i < data.length; i++)
             {
-                const barHeight = data[i] * halfHeight * 4;
-                ctx.fillRect(i * barWidth, halfHeight - barHeight, barWidth, barHeight);
-                ctx.fillRect(i * barWidth, halfHeight, barWidth, barHeight);
+                const barHeight = data[i] * halfHeight * 2;
+                const barX = i * barWidth;
+                const yTop = halfHeight - barHeight;
+                const yBottom = halfHeight;
+                ctx.fillRect(barX, yTop, barWidth, barHeight);
+                ctx.fillRect(barX, yBottom, barWidth, barHeight);
             }
         }
     </script>
