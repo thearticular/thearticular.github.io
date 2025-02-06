@@ -813,8 +813,11 @@
         playBtn.addEventListener('click', () => { videoElement.play(); });
         pauseBtn.addEventListener('click', () => { videoElement.pause(); });
         updateVideoSelector();
-        playVideo(currentIndex);
-        animate();
+        window.addEventListener('load', () =>
+        {
+            playVideo(currentIndex);
+            animate();
+        });
         async function getAudioData(url)
         {
             const response = await fetch(url);
