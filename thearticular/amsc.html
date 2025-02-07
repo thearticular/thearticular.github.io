@@ -76,6 +76,8 @@
         .video-container {
             position: relative;
             aspect-ratio: 1/1;
+            border: #fff;
+            border-width: 10px;
         }
 
         .video {
@@ -665,58 +667,16 @@
             const container = document.querySelector('.video');
             if (!container) return;
             const rect = container.getBoundingClientRect();
-            const baseGlowSize = 1;
-            const extraGlow = amplitude * 4;
-            const glowSize = baseGlowSize + extraGlow;
-            const baseAlpha = 0;
-            const glowAlpha = Math.min(0.6, baseAlpha + amplitude * 1);
-            const safeAreaBottom = parseFloat(getComputedStyle(document.documentElement)
-                .getPropertyValue('--safe-area-inset-bottom')) || 0;
+            const transformedAmplitude = Math.pow(amplitude, 2.2);
+            const glowSize = transformedAmplitude * 0.05;
+            const glowAlpha = Math.min(0.5, transformedAmplitude);
+            ctx.shadowBlur = glowSize * 0.5;
+            ctx.shadowColor = `rgba(255,255,255,${ glowAlpha })`;
             let topGradient = ctx.createLinearGradient(rect.x, rect.y - glowSize, rect.x, rect.y);
             topGradient.addColorStop(0, "rgba(255,255,255,0)");
             topGradient.addColorStop(1, `rgba(255,255,255,${ glowAlpha })`);
             ctx.fillStyle = topGradient;
             ctx.fillRect(rect.x, rect.y - glowSize, rect.width, glowSize);
-            let bottomGradient = ctx.createLinearGradient(
-                rect.x,
-                rect.y + rect.height,
-                rect.x,
-                rect.y + rect.height + glowSize + safeAreaBottom
-            );
-            bottomGradient.addColorStop(0, `rgba(255,255,255,${ glowAlpha })`);
-            bottomGradient.addColorStop(1, "rgba(255,255,255,0)");
-            ctx.fillStyle = bottomGradient;
-            ctx.fillRect(rect.x, rect.y + rect.height, rect.width, glowSize);
-            let leftGradient = ctx.createLinearGradient(rect.x - glowSize, rect.y, rect.x, rect.y);
-            leftGradient.addColorStop(0, "rgba(255,255,255,0)");
-            leftGradient.addColorStop(1, `rgba(255,255,255,${ glowAlpha })`);
-            ctx.fillStyle = leftGradient;
-            ctx.fillRect(rect.x - glowSize, rect.y, glowSize, rect.height);
-            let rightGradient = ctx.createLinearGradient(rect.x + rect.width, rect.y, rect.x + rect.width + glowSize, rect.y);
-            rightGradient.addColorStop(0, `rgba(255,255,255,${ glowAlpha })`);
-            rightGradient.addColorStop(1, "rgba(255,255,255,0)");
-            ctx.fillStyle = rightGradient;
-            ctx.fillRect(rect.x + rect.width, rect.y, glowSize, rect.height);
-            let tlGradient = ctx.createRadialGradient(rect.x, rect.y, 0, rect.x, rect.y, glowSize);
-            tlGradient.addColorStop(0, `rgba(255,255,255,${ glowAlpha })`);
-            tlGradient.addColorStop(1, "rgba(255,255,255,0)");
-            ctx.fillStyle = tlGradient;
-            ctx.fillRect(rect.x - glowSize, rect.y - glowSize, glowSize, glowSize);
-            let trGradient = ctx.createRadialGradient(rect.x + rect.width, rect.y, 0, rect.x + rect.width, rect.y, glowSize);
-            trGradient.addColorStop(0, `rgba(255,255,255,${ glowAlpha })`);
-            trGradient.addColorStop(1, "rgba(255,255,255,0)");
-            ctx.fillStyle = trGradient;
-            ctx.fillRect(rect.x + rect.width, rect.y - glowSize, glowSize, glowSize);
-            let blGradient = ctx.createRadialGradient(rect.x, rect.y + rect.height, 0, rect.x, rect.y + rect.height, glowSize);
-            blGradient.addColorStop(0, `rgba(255,255,255,${ glowAlpha })`);
-            blGradient.addColorStop(1, "rgba(255,255,255,0)");
-            ctx.fillStyle = blGradient;
-            ctx.fillRect(rect.x - glowSize, rect.y + rect.height, glowSize, glowSize);
-            let brGradient = ctx.createRadialGradient(rect.x + rect.width, rect.y + rect.height, 0, rect.x + rect.width, rect.y + rect.height, glowSize);
-            brGradient.addColorStop(0, `rgba(255,255,255,${ glowAlpha })`);
-            brGradient.addColorStop(1, "rgba(255,255,255,0)");
-            ctx.fillStyle = brGradient;
-            ctx.fillRect(rect.x + rect.width, rect.y + rect.height, glowSize, glowSize);
         }
         function animate()
         {
