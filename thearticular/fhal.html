@@ -138,7 +138,7 @@
             min="1"
             max="100000" />
         </div>
-        <label>Optional Settings</label>
+        <label style="font-weight: bolder;">Optional Settings</label>
         <div class="form-group">
           <label for="iterations">Refinement Iterations (1 to 10)</label>
           <input type="number"
@@ -424,7 +424,7 @@
         );
         if (highest)
         {
-          let output = `Coordinate: ${ highest.lat }, ${ highest.lon }, Elevation: ${ highest.elevation }m`;
+          let output = `Found! Coordinate: ${ highest.lat }, ${ highest.lon }, Elevation: ${ highest.elevation }m`;
           if (errorMessages.length > 0)
           {
             output += `<div class="message">Note: ${ errorMessages.join(" ") }</div>`;
@@ -467,7 +467,6 @@
           }
         }
         if (!lowestPoint) break;
-
         searchCenter = lowestPoint;
         searchRadius = gridSpacing * searchMultiplier;
         gridSpacing /= refinement;
@@ -478,14 +477,68 @@
     {
       const resultDiv = document.getElementById("result");
       resultDiv.innerHTML = `<p>Processing, please wait.</p>`;
+      const errorMessages = [];
       const coordInput = document.getElementById("centerCoord").value.trim();
-      let center = parseCoordinateInput(coordInput) || parseCoordinateInput("27.987689311331227, 86.9253211052665");
-      const radius = getValidatedInput("radius", "10000", (v) => !isNaN(v) && Number(v) >= 1 && Number(v) <= 100000, [], "");
-      const iterations = getValidatedInput("iterations", "8", (v) => !isNaN(v) && Number(v) >= 1 && Number(v) <= 10, [], "");
-      const spacing = getValidatedInput("initGridSpacing", (radius / 20).toString(), (v) => !isNaN(v) && Number(v) >= 0.1 && Number(v) <= 5000, [], "");
-      const refinement = getValidatedInput("refinementFactor", "5", (v) => !isNaN(v) && Number(v) >= 2 && Number(v) <= 10, [], "");
-      const searchMultiplier = getValidatedInput("localSearchMultiplier", "2", (v) => !isNaN(v) && Number(v) >= 1 && Number(v) <= 10, [], "");
-      const batchSize = getValidatedInput("batchSize", "100", (v) => !isNaN(v) && Number(v) >= 1 && Number(v) <= 200, [], "");
+      let center = parseCoordinateInput(coordInput);
+      const defaultCenterStr = "27.987689311331227, 86.9253211052665";
+      if (!center)
+      {
+        errorMessages.push(`Invalid coordinate, using default 27.987689311331227, 86.9253211052665.`);
+        center = parseCoordinateInput(defaultCenterStr);
+        document.getElementById("centerCoord").value = "";
+      }
+      const radiusInput = document.getElementById("radius").value.trim();
+      let radius = Number(radiusInput);
+      if (isNaN(radius) || radius < 1 || radius > 100000)
+      {
+        errorMessages.push(`Invalid radius, using default 10000m.`);
+        radius = 10000;
+        document.getElementById("radius").value = "";
+      }
+      const iterations = getValidatedInput(
+        "iterations",
+        "8",
+        (v) => !isNaN(v) && Number(v) >= 1 && Number(v) <= 10,
+        errorMessages,
+        "Invalid iterations, using default 8."
+      );
+      let initGridSpacingInput = document.getElementById("initGridSpacing").value.trim();
+      let spacing;
+      if (initGridSpacingInput === "" || isNaN(initGridSpacingInput))
+      {
+        spacing = radius / 20;
+      }
+      else
+      {
+        spacing = Number(initGridSpacingInput);
+        if (spacing < 0.1 || spacing > 5000)
+        {
+          errorMessages.push(`Invalid grid spacing, using default (Radius/20).`);
+          spacing = radius / 20;
+          document.getElementById("initGridSpacing").value = "";
+        }
+      }
+      const refinement = getValidatedInput(
+        "refinementFactor",
+        "5",
+        (v) => !isNaN(v) && Number(v) >= 2 && Number(v) <= 10,
+        errorMessages,
+        "Invalid grid refinement, using default 5."
+      );
+      const searchMultiplier = getValidatedInput(
+        "localSearchMultiplier",
+        "2",
+        (v) => !isNaN(v) && Number(v) >= 1 && Number(v) <= 10,
+        errorMessages,
+        "Invalid local search multiplier, using default 2."
+      );
+      const batchSize = getValidatedInput(
+        "batchSize",
+        "100",
+        (v) => !isNaN(v) && Number(v) >= 1 && Number(v) <= 200,
+        errorMessages,
+        "Invalid API batch size, using default 100."
+      );
       try
       {
         const lowest = await findLowestAltitude(
@@ -500,12 +553,19 @@
         );
         if (lowest)
         {
-          resultDiv.innerHTML = `Lowest Altitude Coordinate: ${ lowest.lat }, ${ lowest.lon }, Elevation: ${ lowest.elevation }m`;
-        } else
+          let output = `Found! Coordinate: ${ lowest.lat }, ${ lowest.lon }, Elevation: ${ lowest.elevation }m`;
+          if (errorMessages.length > 0)
+          {
+            output += `<div class="message">Note: ${ errorMessages.join(" ") }</div>`;
+          }
+          resultDiv.innerHTML = output;
+        }
+        else
         {
           resultDiv.innerHTML = `<p>No result found.</p>`;
         }
-      } catch (error)
+      }
+      catch (error)
       {
         console.error("An error occurred", error);
         resultDiv.innerHTML = `<p>An unexpected error occurred.</p>`;
