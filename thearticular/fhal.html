@@ -442,37 +442,6 @@
         resultDiv.innerHTML = `<p>An unexpected error occurred.</p>`;
       }
     });
-    async function findLowestAltitude(centerLat, centerLon, radius, iterations, spacing, refinement, searchMultiplier, batchSize)
-    {
-      let lowestPoint = null;
-      let lowestElevation = Infinity;
-      let searchCenter = { lat: centerLat, lon: centerLon };
-      let searchRadius = radius;
-      let gridSpacing = spacing;
-      for (let i = 0; i < iterations; i++)
-      {
-        const gridPoints = generateGrid(searchCenter.lat, searchCenter.lon, searchRadius, gridSpacing);
-        if (gridPoints.length === 0) break;
-        const elevations = await fetchElevations(gridPoints, batchSize);
-        if (!elevations)
-        {
-          return null;
-        }
-        for (const pt of elevations)
-        {
-          if (typeof pt.elevation === "number" && pt.elevation < lowestElevation)
-          {
-            lowestElevation = pt.elevation;
-            lowestPoint = { lat: pt.latitude, lon: pt.longitude };
-          }
-        }
-        if (!lowestPoint) break;
-        searchCenter = lowestPoint;
-        searchRadius = gridSpacing * searchMultiplier;
-        gridSpacing /= refinement;
-      }
-      return lowestPoint ? { ...lowestPoint, elevation: lowestElevation } : null;
-    }
     document.getElementById("findLowestButton").addEventListener("click", async () =>
     {
       const resultDiv = document.getElementById("result");
