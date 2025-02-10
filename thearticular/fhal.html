@@ -9,7 +9,7 @@
     content="hearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0. All rights reserved.">
   <meta name="license"
     content="thearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0. All rights reserved.">
-  <title>Find Highest Altitude</title>
+  <title>Find Elevation</title>
   <link rel='stylesheet'
     href='wp-content/plugins/gutenberg/build/block-library/styleb3b9.css'>
   <link rel='stylesheet'
@@ -110,7 +110,7 @@
   <main class="site-main">
     <article class="hentry entry">
       <header class="entry-header responsive-max-width">
-        <h1 class="entry-title">Find Highest Altitude
+        <h1 class="entry-title">Find Elevation
           <footer>thearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0.
           </footer>
         </h1>
@@ -182,7 +182,8 @@
             min="1"
             max="200" />
         </div>
-        <button id="findButton"><label>Calculate</label></button>
+        <button id="findButton"><label>Find Highest Elevation</label></button>
+        <button id="findLowestButton"><label>Find Lowest Elevation</label></button>
         <div class="result"
           id="result"></div>
       </div>
@@ -211,28 +212,31 @@
       for (let i = 0; i < points.length; i += batchSize)
       {
         const batch = points.slice(i, i + batchSize);
-        const locationsParam = batch
-          .map(pt => `${ pt.lat },${ pt.lon }`)
-          .join("|");
-        const url = `https://api.open-elevation.com/api/v1/lookup?locations=${ encodeURIComponent(
-          locationsParam
-        ) }`;
+        const locationsParam = batch.map(pt => `${ pt.lat },${ pt.lon }`).join("|");
+        const url = `https://api.open-elevation.com/api/v1/lookup?locations=${ encodeURIComponent(locationsParam) }`;
         try
         {
           const response = await fetch(url);
           if (!response.ok)
           {
-            throw new Error(`Network response was not ok, status ${ response.status }`);
+            const errorMessage = `HTTP Error ${ response.status }: ${ response.statusText }`;
+            throw new Error(errorMessage);
           }
           const data = await response.json();
           if (data && data.results)
           {
             results.push(...data.results);
           }
-        }
-        catch (error)
+        } catch (error)
         {
-          console.error("Error fetching elevation data", error);
+          console.error("Error fetching elevation data:", error);
+          document.getElementById("result").innerHTML = `
+        <p style="color: red;">
+          <strong>Elevation API Request Failed</strong><br>
+          ${ error.message } <br>
+          Please check your network connection or try again later.
+        </p>`;
+          return null;
         }
       }
       return results;
@@ -268,6 +272,10 @@
         const gridPoints = generateGrid(searchCenter.lat, searchCenter.lon, searchRadius, gridSpacing);
         if (gridPoints.length === 0) break;
         const elevations = await fetchElevations(gridPoints, batchSize);
+        if (!elevations)
+        {
+          return null;
+        }
         for (const pt of elevations)
         {
           if (typeof pt.elevation === "number" && pt.elevation > highestElevation)
@@ -282,6 +290,37 @@
         gridSpacing /= refinement;
       }
       return highestPoint ? { ...highestPoint, elevation: highestElevation } : null;
+    }
+    async function findLowestAltitude(centerLat, centerLon, radius, iterations, spacing, refinement, searchMultiplier, batchSize)
+    {
+      let lowestPoint = null;
+      let lowestElevation = Infinity;
+      let searchCenter = { lat: centerLat, lon: centerLon };
+      let searchRadius = radius;
+      let gridSpacing = spacing;
+      for (let i = 0; i < iterations; i++)
+      {
+        const gridPoints = generateGrid(searchCenter.lat, searchCenter.lon, searchRadius, gridSpacing);
+        if (gridPoints.length === 0) break;
+        const elevations = await fetchElevations(gridPoints, batchSize);
+        if (!elevations)
+        {
+          return null;
+        }
+        for (const pt of elevations)
+        {
+          if (typeof pt.elevation === "number" && pt.elevation < lowestElevation)
+          {
+            lowestElevation = pt.elevation;
+            lowestPoint = { lat: pt.latitude, lon: pt.longitude };
+          }
+        }
+        if (!lowestPoint) break;
+        searchCenter = lowestPoint;
+        searchRadius = gridSpacing * searchMultiplier;
+        gridSpacing /= refinement;
+      }
+      return lowestPoint ? { ...lowestPoint, elevation: lowestElevation } : null;
     }
     function parseCoordinateInput(inputStr)
     {
@@ -398,6 +437,75 @@
         }
       }
       catch (error)
+      {
+        console.error("An error occurred", error);
+        resultDiv.innerHTML = `<p>An unexpected error occurred.</p>`;
+      }
+    });
+    async function findLowestAltitude(centerLat, centerLon, radius, iterations, spacing, refinement, searchMultiplier, batchSize)
+    {
+      let lowestPoint = null;
+      let lowestElevation = Infinity;
+      let searchCenter = { lat: centerLat, lon: centerLon };
+      let searchRadius = radius;
+      let gridSpacing = spacing;
+      for (let i = 0; i < iterations; i++)
+      {
+        const gridPoints = generateGrid(searchCenter.lat, searchCenter.lon, searchRadius, gridSpacing);
+        if (gridPoints.length === 0) break;
+        const elevations = await fetchElevations(gridPoints, batchSize);
+        if (!elevations)
+        {
+          return null;
+        }
+        for (const pt of elevations)
+        {
+          if (typeof pt.elevation === "number" && pt.elevation < lowestElevation)
+          {
+            lowestElevation = pt.elevation;
+            lowestPoint = { lat: pt.latitude, lon: pt.longitude };
+          }
+        }
+        if (!lowestPoint) break;
+
+        searchCenter = lowestPoint;
+        searchRadius = gridSpacing * searchMultiplier;
+        gridSpacing /= refinement;
+      }
+      return lowestPoint ? { ...lowestPoint, elevation: lowestElevation } : null;
+    }
+    document.getElementById("findLowestButton").addEventListener("click", async () =>
+    {
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = `<p>Processing, please wait.</p>`;
+      const coordInput = document.getElementById("centerCoord").value.trim();
+      let center = parseCoordinateInput(coordInput) || parseCoordinateInput("27.987689311331227, 86.9253211052665");
+      const radius = getValidatedInput("radius", "10000", (v) => !isNaN(v) && Number(v) >= 1 && Number(v) <= 100000, [], "");
+      const iterations = getValidatedInput("iterations", "8", (v) => !isNaN(v) && Number(v) >= 1 && Number(v) <= 10, [], "");
+      const spacing = getValidatedInput("initGridSpacing", (radius / 20).toString(), (v) => !isNaN(v) && Number(v) >= 0.1 && Number(v) <= 5000, [], "");
+      const refinement = getValidatedInput("refinementFactor", "5", (v) => !isNaN(v) && Number(v) >= 2 && Number(v) <= 10, [], "");
+      const searchMultiplier = getValidatedInput("localSearchMultiplier", "2", (v) => !isNaN(v) && Number(v) >= 1 && Number(v) <= 10, [], "");
+      const batchSize = getValidatedInput("batchSize", "100", (v) => !isNaN(v) && Number(v) >= 1 && Number(v) <= 200, [], "");
+      try
+      {
+        const lowest = await findLowestAltitude(
+          center.lat,
+          center.lon,
+          radius,
+          iterations,
+          spacing,
+          refinement,
+          searchMultiplier,
+          batchSize
+        );
+        if (lowest)
+        {
+          resultDiv.innerHTML = `Lowest Altitude Coordinate: ${ lowest.lat }, ${ lowest.lon }, Elevation: ${ lowest.elevation }m`;
+        } else
+        {
+          resultDiv.innerHTML = `<p>No result found.</p>`;
+        }
+      } catch (error)
       {
         console.error("An error occurred", error);
         resultDiv.innerHTML = `<p>An unexpected error occurred.</p>`;
