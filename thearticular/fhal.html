@@ -424,7 +424,7 @@
         );
         if (highest)
         {
-          let output = `Found! Coordinate: ${ highest.lat }, ${ highest.lon }, Elevation: ${ highest.elevation }m`;
+          let output = `Found! Coordinate: ${ highest.lat }, ${ highest.lon }, Elevation: ${ highest.elevation }m<br><br>`;
           if (errorMessages.length > 0)
           {
             output += `<div class="message">Note: ${ errorMessages.join(" ") }</div>`;
@@ -522,7 +522,7 @@
         );
         if (lowest)
         {
-          let output = `Found! Coordinate: ${ lowest.lat }, ${ lowest.lon }, Elevation: ${ lowest.elevation }m`;
+          let output = `Found! Coordinate: ${ lowest.lat }, ${ lowest.lon }, Elevation: ${ lowest.elevation }m<br><br>`;
           if (errorMessages.length > 0)
           {
             output += `<div class="message">Note: ${ errorMessages.join(" ") }</div>`;
