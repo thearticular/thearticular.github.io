@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="copyright"
+    content="hearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0. All rights reserved.">
+  <meta name="license"
+    content="thearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0. All rights reserved.">
+  <title>Find Highest Altitude</title>
+  <link rel='stylesheet'
+    href='wp-content/plugins/gutenberg/build/block-library/styleb3b9.css'>
+  <link rel='stylesheet'
+    href='wp-content/themes/hever/stylee2c1.css'>
+  <style>
+    body {
+      --wp--preset--spacing--30: 0.67rem;
+      background-color: #000000;
+      color: rgb(255, 255, 255);
+      overscroll-behavior: none;
+    }
+
+    .wp-block-button__link {
+      padding-top: var(--wp--preset--spacing--30);
+      padding-bottom: var(--wp--preset--spacing--30);
+    }
+
+    footer {
+      color: white;
+      font-size: 15px;
+      text-align: center;
+      width: 100%;
+      margin: 1px auto;
+      font-weight: normal;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      font-size: 15px;
+      background-color: #000000;
+      color: rgb(255, 255, 255);
+      font-weight: normal;
+      text-align: center;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      color: rgb(255, 255, 255);
+      caret-color: rgb(255, 255, 255);
+      font-weight: normal;
+      font-size: 15px;
+      text-align: center;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      font-weight: normal;
+      font-size: 15px;
+      text-align: center;
+    }
+
+    button {
+      width: 100%;
+      font-size: 15px;
+      color: rgb(255, 255, 255);
+      background-color: #000000;
+      border-width: 1px;
+      border-color: #ffffff;
+      justify-content: center;
+      display: flex;
+      font-weight: normal;
+      text-align: center;
+    }
+
+    .result {
+      word-break: break-word;
+      color: rgb(255, 255, 255);
+      background-color: #000000;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 15px;
+      font-weight: normal;
+    }
+
+    .message {
+      font-size: 15px;
+      color: rgb(255, 255, 255);
+      background-color: #000000;
+      text-align: center;
+      font-weight: normal;
+    }
+
+    label {
+      font-size: 15px;
+      text-align: center;
+      justify-content: center;
+      display: flex;
+      font-weight: normal;
+    }
+  </style>
+</head>
+
+<body class="singular">
+  <main class="site-main">
+    <article class="hentry entry">
+      <header class="entry-header responsive-max-width">
+        <h1 class="entry-title">Find Highest Altitude
+          <footer>thearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0.
+          </footer>
+        </h1>
+      </header>
+      <div class="entry-content">
+        <div class="wp-block-buttons">
+          <div
+            class="wp-block-button has-custom-width wp-block-button__width-100 has-custom-font-size is-style-outline has-small-font-size">
+            <a class="wp-block-button__link has-background-color has-foreground-background-color has-text-color has-background has-link-color wp-element-button"
+              href="../index.html">Homepage</a>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="centerCoord">Center Coordinate (Latitude, Longitude, You can
+            directly copy past form Google Maps)</label>
+          <input type="text"
+            id="centerCoord"
+            placeholder="27.987689311331227, 86.9253211052665" />
+        </div>
+        <div class="form-group">
+          <label for="radius">Radius (Meters, 1 to 100000)</label>
+          <input type="number"
+            id="radius"
+            placeholder="10000"
+            min="1"
+            max="100000" />
+        </div>
+        <label>Optional Settings</label>
+        <div class="form-group">
+          <label for="iterations">Refinement Iterations (1 to 10)</label>
+          <input type="number"
+            id="iterations"
+            placeholder="8"
+            min="1"
+            max="10" />
+        </div>
+        <div class="form-group">
+          <label for="initGridSpacing">Initial Grid Spacing (Radius/20, 0.1 to 5000)</label>
+          <input type="number"
+            id="initGridSpacing"
+            placeholder="Radius/20"
+            min="0.1"
+            max="5000"
+            step="0.1" />
+        </div>
+        <div class="form-group">
+          <label for="refinementFactor">Grid Refinement Factor (2 to 10)</label>
+          <input type="number"
+            id="refinementFactor"
+            placeholder="5"
+            min="2"
+            max="10"
+            step="0.1" />
+        </div>
+        <div class="form-group">
+          <label for="localSearchMultiplier">Local Search Radius Multiplier (1 to 10)</label>
+          <input type="number"
+            id="localSearchMultiplier"
+            placeholder="2"
+            min="1"
+            max="10"
+            step="0.1" />
+        </div>
+        <div class="form-group">
+          <label for="batchSize">API Batch Size (1 to 200)</label>
+          <input type="number"
+            id="batchSize"
+            placeholder="100"
+            min="1"
+            max="200" />
+        </div>
+        <button id="findButton"><label>Calculate</label></button>
+        <div class="result"
+          id="result"></div>
+      </div>
+    </article>
+  </main>
+  <script>
+    const EARTH_RADIUS = 6371000;
+    function toRadians(degrees)
+    {
+      return degrees * Math.PI / 180;
+    }
+    function haversineDistance(lat1, lon1, lat2, lon2)
+    {
+      const dLat = toRadians(lat2 - lat1);
+      const dLon = toRadians(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRadians(lat1)) *
+        Math.cos(toRadians(lat2)) *
+        Math.sin(dLon / 2) ** 2;
+      return 2 * EARTH_RADIUS * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+    async function fetchElevations(points, batchSize)
+    {
+      const results = [];
+      for (let i = 0; i < points.length; i += batchSize)
+      {
+        const batch = points.slice(i, i + batchSize);
+        const locationsParam = batch
+          .map(pt => `${ pt.lat },${ pt.lon }`)
+          .join("|");
+        const url = `https://api.open-elevation.com/api/v1/lookup?locations=${ encodeURIComponent(
+          locationsParam
+        ) }`;
+        try
+        {
+          const response = await fetch(url);
+          if (!response.ok)
+          {
+            throw new Error(`Network response was not ok, status ${ response.status }`);
+          }
+          const data = await response.json();
+          if (data && data.results)
+          {
+            results.push(...data.results);
+          }
+        }
+        catch (error)
+        {
+          console.error("Error fetching elevation data", error);
+        }
+      }
+      return results;
+    }
+    function generateGrid(centerLat, centerLon, radius, spacing)
+    {
+      const points = [];
+      const latRadius = radius / 111320;
+      const lonRadius = radius / (111320 * Math.cos(toRadians(centerLat)));
+      const latStep = spacing / 111320;
+      const lonStep = spacing / (111320 * Math.cos(toRadians(centerLat)));
+      for (let lat = centerLat - latRadius; lat <= centerLat + latRadius; lat += latStep)
+      {
+        for (let lon = centerLon - lonRadius; lon <= centerLon + lonRadius; lon += lonStep)
+        {
+          if (haversineDistance(centerLat, centerLon, lat, lon) <= radius)
+          {
+            points.push({ lat, lon });
+          }
+        }
+      }
+      return points;
+    }
+    async function findHighestAltitude(centerLat, centerLon, radius, iterations, spacing, refinement, searchMultiplier, batchSize)
+    {
+      let highestPoint = null;
+      let highestElevation = -Infinity;
+      let searchCenter = { lat: centerLat, lon: centerLon };
+      let searchRadius = radius;
+      let gridSpacing = spacing;
+      for (let i = 0; i < iterations; i++)
+      {
+        const gridPoints = generateGrid(searchCenter.lat, searchCenter.lon, searchRadius, gridSpacing);
+        if (gridPoints.length === 0) break;
+        const elevations = await fetchElevations(gridPoints, batchSize);
+        for (const pt of elevations)
+        {
+          if (typeof pt.elevation === "number" && pt.elevation > highestElevation)
+          {
+            highestElevation = pt.elevation;
+            highestPoint = { lat: pt.latitude, lon: pt.longitude };
+          }
+        }
+        if (!highestPoint) break;
+        searchCenter = highestPoint;
+        searchRadius = gridSpacing * searchMultiplier;
+        gridSpacing /= refinement;
+      }
+      return highestPoint ? { ...highestPoint, elevation: highestElevation } : null;
+    }
+    function parseCoordinateInput(inputStr)
+    {
+      if (!inputStr || typeof inputStr !== "string") return null;
+      const parts = inputStr.split(",");
+      if (parts.length !== 2) return null;
+      const lat = Number(parts[0].trim());
+      const lon = Number(parts[1].trim());
+      if (isNaN(lat) || isNaN(lon)) return null;
+      return { lat, lon };
+    }
+    function getValidatedInput(id, defaultValue, validatorFn, errorMessages, errorMsg)
+    {
+      const inputElem = document.getElementById(id);
+      let value = inputElem.value.trim();
+      if (value === "" || (validatorFn && !validatorFn(value)))
+      {
+        errorMessages.push(`${ errorMsg } Using default ${ defaultValue }.`);
+        inputElem.value = "";
+        return Number(defaultValue);
+      }
+      return Number(value);
+    }
+    document.getElementById("findButton").addEventListener("click", async () =>
+    {
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = `<p>Processing, please wait.</p>`;
+      const errorMessages = [];
+      const coordInput = document.getElementById("centerCoord").value.trim();
+      let center = parseCoordinateInput(coordInput);
+      const defaultCenterStr = "27.987689311331227, 86.9253211052665";
+      if (!center)
+      {
+        errorMessages.push(`Invalid coordinate, using default 27.987689311331227, 86.9253211052665.`);
+        center = parseCoordinateInput(defaultCenterStr);
+        document.getElementById("centerCoord").value = "";
+      }
+      const radiusInput = document.getElementById("radius").value.trim();
+      let radius = Number(radiusInput);
+      if (isNaN(radius) || radius < 1 || radius > 100000)
+      {
+        errorMessages.push(`Invalid radius, using default 10000m.`);
+        radius = 10000;
+        document.getElementById("radius").value = "";
+      }
+      const iterations = getValidatedInput(
+        "iterations",
+        "8",
+        (v) => !isNaN(v) && Number(v) >= 1 && Number(v) <= 10,
+        errorMessages,
+        "Invalid iterations, using default 8."
+      );
+      let initGridSpacingInput = document.getElementById("initGridSpacing").value.trim();
+      let spacing;
+      if (initGridSpacingInput === "" || isNaN(initGridSpacingInput))
+      {
+        spacing = radius / 20;
+      }
+      else
+      {
+        spacing = Number(initGridSpacingInput);
+        if (spacing < 0.1 || spacing > 5000)
+        {
+          errorMessages.push(`Invalid grid spacing, using default (Radius/20).`);
+          spacing = radius / 20;
+          document.getElementById("initGridSpacing").value = "";
+        }
+      }
+      const refinement = getValidatedInput(
+        "refinementFactor",
+        "5",
+        (v) => !isNaN(v) && Number(v) >= 2 && Number(v) <= 10,
+        errorMessages,
+        "Invalid grid refinement, using default 5."
+      );
+      const searchMultiplier = getValidatedInput(
+        "localSearchMultiplier",
+        "2",
+        (v) => !isNaN(v) && Number(v) >= 1 && Number(v) <= 10,
+        errorMessages,
+        "Invalid local search multiplier, using default 2."
+      );
+      const batchSize = getValidatedInput(
+        "batchSize",
+        "100",
+        (v) => !isNaN(v) && Number(v) >= 1 && Number(v) <= 200,
+        errorMessages,
+        "Invalid API batch size, using default 100."
+      );
+      try
+      {
+        const highest = await findHighestAltitude(
+          center.lat,
+          center.lon,
+          radius,
+          iterations,
+          spacing,
+          refinement,
+          searchMultiplier,
+          batchSize
+        );
+        if (highest)
+        {
+          let output = `Coordinate: ${ highest.lat }, ${ highest.lon }, Elevation: ${ highest.elevation }m`;
+          if (errorMessages.length > 0)
+          {
+            output += `<div class="message">Note: ${ errorMessages.join(" ") }</div>`;
+          }
+          resultDiv.innerHTML = output;
+        }
+        else
+        {
+          resultDiv.innerHTML = `<p>No result found.</p>`;
+        }
+      }
+      catch (error)
+      {
+        console.error("An error occurred", error);
+        resultDiv.innerHTML = `<p>An unexpected error occurred.</p>`;
+      }
+    });
+  </script>
+</body>
+
+</html>
