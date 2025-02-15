@@ -639,19 +639,114 @@
         function draw(amplitude)
         {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const container = document.querySelector('.video');
-            if (!container) return;
-            const rect = container.getBoundingClientRect();
-            const transformedAmplitude = Math.pow(amplitude, 2.2);
-            const glowSize = transformedAmplitude * 0.05;
-            const glowAlpha = Math.min(0.5, transformedAmplitude);
-            ctx.shadowBlur = glowSize * 0.5;
-            ctx.shadowColor = `rgba(255,255,255,${ glowAlpha })`;
-            let topGradient = ctx.createLinearGradient(rect.x, rect.y - glowSize, rect.x, rect.y);
-            topGradient.addColorStop(0, "rgba(255,255,255,0)");
-            topGradient.addColorStop(1, `rgba(255,255,255,${ glowAlpha })`);
-            ctx.fillStyle = topGradient;
-            ctx.fillRect(rect.x, rect.y - glowSize, rect.width, glowSize);
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const baseRadius = 200;
+            const numShapes = 12;
+            const maxAmplitudeScale = 0.01;
+            const transformedAmplitude = Math.pow(amplitude, 1);
+            const scale = 1 + (transformedAmplitude * maxAmplitudeScale);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            for (let i = 0; i < numShapes; i++)
+            {
+                const layerRadius = baseRadius * (i + 1) * scale * 0.2;
+                const numSegments = 6 + i * 2;
+                ctx.beginPath();
+                const shapeType = i % 5;
+                if (shapeType === 0)
+                {
+                    ctx.arc(centerX, centerY, layerRadius, 0, 2 * Math.PI);
+                }
+                else if (shapeType === 1)
+                {
+                    for (let j = 0; j < numSegments; j++)
+                    {
+                        const angle = (j / numSegments) * 2 * Math.PI;
+                        const x1 = centerX + layerRadius * Math.cos(angle);
+                        const y1 = centerY + layerRadius * Math.sin(angle);
+                        const controlAngle1 = angle + (Math.PI / numSegments) * 0.6;
+                        const controlAngle2 = angle - (Math.PI / numSegments) * 0.6;
+                        const controlRadius = layerRadius * 1.3;
+
+                        const cx1 = centerX + controlRadius * Math.cos(controlAngle1);
+                        const cy1 = centerY + controlRadius * Math.sin(controlAngle1);
+                        const cx2 = centerX + controlRadius * Math.cos(controlAngle2);
+                        const cy2 = centerY + controlRadius * Math.sin(controlAngle2);
+                        if (j === 0)
+                        {
+                            ctx.moveTo(x1, y1);
+                        }
+                        else
+                        {
+                            ctx.lineTo(x1, y1);
+                        }
+                    }
+                }
+                else if (shapeType === 2)
+                {
+                    for (let j = 0; j < numSegments * 2; j++)
+                    {
+                        const angle = (j / (numSegments * 2)) * 2 * Math.PI;
+                        const r = (j % 2 === 0) ? layerRadius : layerRadius * 0.5;
+                        const x = centerX + r * Math.cos(angle);
+                        const y = centerY + r * Math.sin(angle);
+                        if (j === 0)
+                        {
+                            ctx.moveTo(x, y);
+                        } 
+                        else
+                        {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                }
+                else if (shapeType === 3)
+                {
+                    for (let j = 0; j < numSegments; j++)
+                    {
+                        const angle = (j / numSegments) * 2 * Math.PI;
+                        const x1 = centerX + layerRadius * Math.cos(angle);
+                        const y1 = centerY + layerRadius * Math.sin(angle);
+                        const controlAngle1 = angle + (Math.PI / numSegments) * 0.8;
+                        const controlRadius1 = layerRadius * 0.6;
+                        const cx1 = centerX + controlRadius1 * Math.cos(controlAngle1);
+                        const cy1 = centerY + controlRadius1 * Math.sin(controlAngle1);
+                        const nextAngle = ((j + 1) / numSegments) * 2 * Math.PI;
+                        const x2 = centerX + layerRadius * Math.cos(nextAngle);
+                        const y2 = centerY + layerRadius * Math.sin(nextAngle);
+                        if (j === 0)
+                        {
+                            ctx.moveTo(x1, y1);
+                        }
+                        ctx.quadraticCurveTo(cx1, cy1, x2, y2);
+                    }
+                }
+                else if (shapeType === 4)
+                {
+                    for (let j = 0; j < numSegments; j++)
+                    {
+                        const angle = (j / numSegments) * 2 * Math.PI;
+                        const x = centerX + layerRadius * Math.cos(angle);
+                        const y = centerY + layerRadius * Math.sin(angle);
+                        const innerAngle = angle + Math.PI / numSegments;
+                        const innerRadius = layerRadius * 0.6;
+                        const innerX = centerX + innerRadius * Math.cos(innerAngle);
+                        const innerY = centerY + innerRadius * Math.sin(innerAngle);
+                        if (j === 0)
+                        {
+                            ctx.moveTo(x, y);
+                        }
+                        else
+                        {
+                            ctx.lineTo(x, y);
+                        }
+                        ctx.lineTo(innerX, innerY);
+                    }
+                }
+                ctx.closePath();
+                ctx.stroke();
+            }
         }
         function animate()
         {
