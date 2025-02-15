@@ -904,6 +904,35 @@
                 ctx.fillRect(barX, yBottom, barWidth, barHeight);
             }
         }
+        function adjustVideoSize()
+        {
+            const videoContainer = document.querySelector('.video-container');
+            if (!videoContainer) return;
+            const minSize = 500;
+            const intrinsicSize = 500;
+            const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            let safeAreaBottom = 0;
+            try
+            {
+                safeAreaBottom = parseFloat(getComputedStyle(document.documentElement)
+                    .getPropertyValue('--safe-area-inset-bottom')) || 0;
+            } catch (e)
+            {
+                safeAreaBottom = 0;
+            }
+            const topOffset = videoContainer.getBoundingClientRect().top;
+            const availableHeight = viewportHeight - topOffset - safeAreaBottom;
+            let size = Math.min(availableHeight, intrinsicSize);
+            size = Math.max(size, minSize);
+            videoContainer.style.height = size + 'px';
+            videoContainer.style.width = size + 'px';
+        }
+        window.addEventListener('load', adjustVideoSize);
+        window.addEventListener('resize', adjustVideoSize);
+        if (window.visualViewport)
+        {
+            window.visualViewport.addEventListener('resize', adjustVideoSize);
+        }
     </script>
 </body>
 
