@@ -103,7 +103,6 @@
             margin-right: 8px;
         }
 
-        select,
         button {
             background-color: #00000000;
             color: #fff;
@@ -115,6 +114,26 @@
             font-weight: bold;
             font-size: 15px;
             border-radius: 0;
+        }
+
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: transparent;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 0;
+            height: 40px;
+            margin: 1px;
+            width: 100%;
+            font-weight: bold;
+            font-size: 15px;
+            border-radius: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-size: 40px 40px;
+            background-position: right 10px center;
         }
 
         select option {
@@ -694,7 +713,7 @@
                         if (j === 0)
                         {
                             ctx.moveTo(x, y);
-                        } 
+                        }
                         else
                         {
                             ctx.lineTo(x, y);
