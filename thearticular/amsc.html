@@ -198,7 +198,7 @@
         }
 
         #backgroundCanvas {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             right: 0;
@@ -663,11 +663,11 @@
             const baseRadius = 100;
             const numLayers = 15;
             const maxAmplitudeScale = 0.001;
-            const transformedAmplitude = Math.pow(amplitude, 2);
+            const transformedAmplitude = Math.pow(amplitude, 1.5);
             const scale = 1 + (transformedAmplitude * maxAmplitudeScale);
             const time = Date.now() * 0.001;
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
             for (let i = 0; i < numLayers; i++)
             {
                 const layerRadius = baseRadius * (i + 1) * scale * 0.15;
