@@ -666,8 +666,9 @@
             const transformedAmplitude = Math.pow(amplitude, 1.5);
             const scale = 1 + (transformedAmplitude * maxAmplitudeScale);
             const time = Date.now() * 0.001;
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            const hue = (time * 50) % 360;
+            ctx.strokeStyle = `hsla(${ hue }, 100%, 50%, 0.4)`;
             for (let i = 0; i < numLayers; i++)
             {
                 const layerRadius = baseRadius * (i + 1) * scale * 0.15;
@@ -696,23 +697,6 @@
                             } else
                             {
                                 ctx.quadraticCurveTo(cx, cy, x, y);
-                            }
-                        }
-                        break;
-                    case 1:
-                        for (let j = 0; j < segments * 2; j++)
-                        {
-                            const angle = (j / segments) * 2 * Math.PI + rotation;
-                            const spiralFactor = j / (segments * 2) * (2 + Math.sin(time));
-                            const r = layerRadius * (0.5 + spiralFactor * 0.5);
-                            const x = centerX + r * Math.cos(angle + spiralFactor);
-                            const y = centerY + r * Math.sin(angle + spiralFactor);
-                            if (j === 0)
-                            {
-                                ctx.moveTo(x, y);
-                            } else
-                            {
-                                ctx.lineTo(x, y);
                             }
                         }
                         break;
