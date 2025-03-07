@@ -649,11 +649,11 @@
             function drawVisualizer1(dataArray)
             {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const barWidth = canvas.width / dataArray.length;
+                const barWidth = canvas.width / dataArray.length * 20;
                 for (let i = 0; i < dataArray.length; i++)
                 {
-                    const barHeight = dataArray[i] / 2;
-                    ctx.fillStyle = `rgba(255, 255, 255, ${ dataArray[i] / 255 })`;
+                    const barHeight = dataArray[i] / 1;
+                    ctx.fillStyle = `rgba(255, 255, 255, ${ dataArray[i] / 1 })`;
                     ctx.fillRect(i * barWidth, canvas.height - barHeight, barWidth, barHeight);
                 }
             },
@@ -665,7 +665,7 @@
                 ctx.beginPath();
                 for (let i = 0; i < dataArray.length; i++)
                 {
-                    const y = canvas.height - (dataArray[i] / 2);
+                    const y = canvas.height - (dataArray[i] / 0.5);
                     ctx.lineTo(i * (canvas.width / dataArray.length), y);
                 }
                 ctx.stroke();
@@ -674,10 +674,10 @@
             {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = 'white';
-                const step = canvas.width / dataArray.length;
+                const step = canvas.width / dataArray.length * 10;
                 for (let i = 0; i < dataArray.length; i++)
                 {
-                    const size = dataArray[i] / 2;
+                    const size = dataArray[i] / 1;
                     ctx.fillRect(i * step, canvas.height - size, step - 2, size);
                 }
             },
@@ -689,8 +689,8 @@
                 ctx.beginPath();
                 for (let i = 0; i < dataArray.length; i++)
                 {
-                    let angle = (i * Math.PI * 2) / dataArray.length;
-                    let radius = 50 + dataArray[i] / 2;
+                    let angle = (i * Math.PI * 20) / dataArray.length;
+                    let radius = 50 + dataArray[i] / 1;
                     let x = canvas.width / 2 + Math.cos(angle) * radius;
                     let y = canvas.height / 2 + Math.sin(angle) * radius;
                     ctx.lineTo(x, y);
@@ -704,9 +704,9 @@
                 ctx.fillStyle = 'white';
                 for (let i = 0; i < dataArray.length; i++)
                 {
-                    let size = dataArray[i] / 2;
+                    let size = dataArray[i] / 1;
                     ctx.fillRect(
-                        canvas.width / 2 - size / 2 + (i - dataArray.length / 2) * 10,
+                        canvas.width / 2 - size / 2 + (i - dataArray.length / 2) * 100,
                         canvas.height / 2 - size / 2,
                         size,
                         size
