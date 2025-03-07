@@ -79,17 +79,11 @@
             padding-bottom: var(--wp--preset--spacing--30);
         }
 
-        .video-container {
-            position: relative;
-            aspect-ratio: 1/1;
-            border: #fff;
-            border-width: 10px;
-        }
-
         .video {
             width: 100%;
             display: none;
-            margin-top: -8px;
+            margin-top: 2px;
+            margin-bottom: 2px;
         }
 
         .controls {
@@ -198,14 +192,12 @@
         }
 
         #backgroundCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: -10;
-            width: 100vw;
-            height: 100vh;
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1/1;
+            border: 2px solid white;
         }
 
         footer {
@@ -224,7 +216,6 @@
 </head>
 
 <body class="singular">
-    <canvas id="backgroundCanvas"></canvas>
     <main class="site-main">
         <article class="hentry entry">
             <header class="entry-header responsive-max-width">
@@ -285,6 +276,9 @@
                     </button>
                 </div>
                 <div class="controls">
+                    <button id="visualizer">
+                        <i class="fa-solid fa-step-backward"></i> Visualizer
+                    </button>
                     <button id="prevBtn">
                         <i class="fa-solid fa-step-backward"></i> Previous
                     </button>
@@ -304,10 +298,9 @@
                     </div>
                     <div id="loadingText">Loading Please Wait</div>
                 </div>
-                <div class="video-container">
-                    <video class="video"
-                        preload="none"></video>
-                </div>
+                <video class="video"
+                    preload="none"></video>
+                <canvas id="backgroundCanvas"></canvas>
             </div>
         </article>
     </main>
@@ -352,6 +345,7 @@
         let panDurationInFrames = 100;
         let hue = 0;
         let worker;
+        let currentVisualizerIndex = 0;
         const videoSources = [
             "wp-content/uploads/govha.mp4",
             "wp-content/uploads/tandav.mp4",
@@ -650,152 +644,71 @@
         }
         function resizeCanvas()
         {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            const size = Math.min(window.innerWidth, 500);
+            canvas.width = size;
+            canvas.height = size;
         }
+        const visualizers = [
+            function drawVisualizer1(amplitude)
+            {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = `rgba(255, 255, 255, ${ amplitude / 100 })`;
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, canvas.height / 2, amplitude * 2, 0, Math.PI * 2);
+                ctx.fill();
+            },
+            function drawVisualizer2(amplitude)
+            {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height / 2);
+                ctx.lineTo(canvas.width, canvas.height / 2 + amplitude * 2);
+                ctx.stroke();
+            },
+            function drawVisualizer3(amplitude)
+            {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                for (let i = 0; i < 10; i++)
+                {
+                    let size = amplitude * (i + 1) * 0.5;
+                    ctx.fillRect(i * 50, canvas.height / 2 - size / 2, 40, size);
+                }
+            },
+            function drawVisualizer4(amplitude)
+            {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for (let i = 0; i < 360; i += 10)
+                {
+                    let angle = (i * Math.PI) / 180;
+                    let x = canvas.width / 2 + Math.cos(angle) * (100 + amplitude);
+                    let y = canvas.height / 2 + Math.sin(angle) * (100 + amplitude);
+                    ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+            },
+            function drawVisualizer5(amplitude)
+            {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                for (let i = 0; i < 5; i++)
+                {
+                    let size = amplitude * (i + 1);
+                    ctx.fillRect(canvas.width / 2 - size / 2, canvas.height / 2 - size / 2, size, size);
+                }
+            }
+        ];
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
         function draw(amplitude)
         {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const baseRadius = 100;
-            const numLayers = 15;
-            const maxAmplitudeScale = 0.001;
-            const transformedAmplitude = Math.pow(amplitude, 1.5);
-            const scale = 1 + (transformedAmplitude * maxAmplitudeScale);
-            const time = Date.now() * 0.001;
-            ctx.lineWidth = 1;
-            const hue = (time * 50) % 360;
-            ctx.strokeStyle = `hsla(${ hue }, 100%, 50%, 0.4)`;
-            for (let i = 0; i < numLayers; i++)
-            {
-                const layerRadius = baseRadius * (i + 1) * scale * 0.15;
-                const layerType = i % 7;
-                const rotation = time * (0.1 + i * 0.02) * (i % 2 === 0 ? 1 : -1);
-                const baseSegments = 6 + i * 2;
-                const segments = baseSegments + Math.sin(time + i) * 2;
-                ctx.beginPath();
-                switch (layerType)
-                {
-                    case 0:
-                        for (let j = 0; j < segments; j++)
-                        {
-                            const angle = (j / segments) * 2 * Math.PI + rotation;
-                            const radiusMod = Math.sin(angle * (3 + i)) * 0.2 + 1;
-                            const r = layerRadius * radiusMod;
-                            const x = centerX + r * Math.cos(angle);
-                            const y = centerY + r * Math.sin(angle);
-                            const controlAngle = angle + Math.PI / segments * (0.5 + Math.sin(time));
-                            const controlR = r * (0.7 + Math.sin(time * 0.5 + i) * 0.2);
-                            const cx = centerX + controlR * Math.cos(controlAngle);
-                            const cy = centerY + controlR * Math.sin(controlAngle);
-                            if (j === 0)
-                            {
-                                ctx.moveTo(x, y);
-                            } else
-                            {
-                                ctx.quadraticCurveTo(cx, cy, x, y);
-                            }
-                        }
-                        break;
-                    case 2:
-                        for (let j = 0; j < segments; j++)
-                        {
-                            const angle = (j / segments) * 2 * Math.PI + rotation;
-                            const nextAngle = ((j + 1) / segments) * 2 * Math.PI + rotation;
-                            const x1 = centerX + layerRadius * Math.cos(angle);
-                            const y1 = centerY + layerRadius * Math.sin(angle);
-                            const x2 = centerX + layerRadius * Math.cos(nextAngle);
-                            const y2 = centerY + layerRadius * Math.sin(nextAngle);
-                            const innerR = layerRadius * (0.5 + Math.sin(time + i) * 0.2);
-                            const innerX = centerX + innerR * Math.cos(angle + Math.PI / segments);
-                            const innerY = centerY + innerR * Math.sin(angle + Math.PI / segments);
-                            if (j === 0)
-                            {
-                                ctx.moveTo(x1, y1);
-                            }
-                            ctx.lineTo(innerX, innerY);
-                            ctx.lineTo(x2, y2);
-                        }
-                        break;
-                    case 3:
-                        for (let j = 0; j < segments; j++)
-                        {
-                            const angle = (j / segments) * 2 * Math.PI + rotation;
-                            const osc = Math.sin(time + j + i) * 0.2;
-                            const r = layerRadius * (1 + osc);
-                            const x = centerX + r * Math.cos(angle);
-                            const y = centerY + r * Math.sin(angle);
-                            ctx.moveTo(x, y);
-                            ctx.arc(x, y, layerRadius * 0.1 * (1 + osc), 0, 2 * Math.PI);
-                        }
-                        break;
-                    case 4:
-                        for (let j = 0; j < segments; j++)
-                        {
-                            const angle = (j / segments) * 2 * Math.PI + rotation;
-                            const x = centerX + layerRadius * Math.cos(angle);
-                            const y = centerY + layerRadius * Math.sin(angle);
-                            const size = layerRadius * 0.2 * (1 + Math.sin(time + i) * 0.3);
-                            ctx.moveTo(x - size, y - size);
-                            ctx.lineTo(x + size, y - size);
-                            ctx.lineTo(x + size, y + size);
-                            ctx.lineTo(x - size, y + size);
-                            ctx.lineTo(x - size, y - size);
-                            const innerSize = size * 0.5;
-                            ctx.moveTo(x - innerSize, y - innerSize);
-                            ctx.lineTo(x + innerSize, y - innerSize);
-                            ctx.lineTo(x + innerSize, y + innerSize);
-                            ctx.lineTo(x - innerSize, y + innerSize);
-                            ctx.lineTo(x - innerSize, y - innerSize);
-                        }
-                        break;
-
-                    case 5:
-                        for (let j = 0; j < segments; j++)
-                        {
-                            const angle = (j / segments) * 2 * Math.PI + rotation;
-                            const r = layerRadius * (1 + Math.sin(angle * 4 + time) * 0.2);
-                            const x1 = centerX + r * Math.cos(angle);
-                            const y1 = centerY + r * Math.sin(angle);
-                            const controlAngle = angle + Math.PI / segments * (0.5 + Math.sin(time));
-                            const controlR = r * 0.7;
-                            const cx = centerX + controlR * Math.cos(controlAngle);
-                            const cy = centerY + controlR * Math.sin(controlAngle);
-                            const nextAngle = ((j + 1) / segments) * 2 * Math.PI + rotation;
-                            const x2 = centerX + r * Math.cos(nextAngle);
-                            const y2 = centerY + r * Math.sin(nextAngle);
-                            if (j === 0)
-                            {
-                                ctx.moveTo(x1, y1);
-                            }
-                            ctx.quadraticCurveTo(cx, cy, x2, y2);
-                        }
-                        break;
-                    case 6:
-                        for (let j = 0; j < segments * 2; j++)
-                        {
-                            const angle = (j / (segments * 2)) * 2 * Math.PI + rotation;
-                            const wave = Math.sin(angle * (2 + i) + time) * 0.2;
-                            const interference = Math.sin(angle * 3 + time * 2) * 0.1;
-                            const r = layerRadius * (1 + wave + interference);
-                            const x = centerX + r * Math.cos(angle);
-                            const y = centerY + r * Math.sin(angle);
-                            if (j === 0)
-                            {
-                                ctx.moveTo(x, y);
-                            } else
-                            {
-                                ctx.lineTo(x, y);
-                            }
-                        }
-                        break;
-                }
-                ctx.closePath();
-                ctx.stroke();
-            }
+            visualizers[currentVisualizerIndex](amplitude);
         }
         function animate()
         {
@@ -995,35 +908,10 @@
                 ctx.fillRect(barX, yBottom, barWidth, barHeight);
             }
         }
-        function adjustVideoSize()
+        document.getElementById('visualizer').addEventListener('click', () =>
         {
-            const videoContainer = document.querySelector('.video-container');
-            if (!videoContainer) return;
-            const minSize = 500;
-            const intrinsicSize = 500;
-            const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-            let safeAreaBottom = 0;
-            try
-            {
-                safeAreaBottom = parseFloat(getComputedStyle(document.documentElement)
-                    .getPropertyValue('--safe-area-inset-bottom')) || 0;
-            } catch (e)
-            {
-                safeAreaBottom = 0;
-            }
-            const topOffset = videoContainer.getBoundingClientRect().top;
-            const availableHeight = viewportHeight - topOffset - safeAreaBottom;
-            let size = Math.min(availableHeight, intrinsicSize);
-            size = Math.max(size, minSize);
-            videoContainer.style.height = size + 'px';
-            videoContainer.style.width = size + 'px';
-        }
-        window.addEventListener('load', adjustVideoSize);
-        window.addEventListener('resize', adjustVideoSize);
-        if (window.visualViewport)
-        {
-            window.visualViewport.addEventListener('resize', adjustVideoSize);
-        }
+            currentVisualizerIndex = (currentVisualizerIndex + 1) % visualizers.length;
+        });
     </script>
 </body>
 
