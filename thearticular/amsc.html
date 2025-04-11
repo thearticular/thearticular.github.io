@@ -84,6 +84,8 @@
             display: none;
             margin-top: 2px;
             margin-bottom: 2px;
+            position: relative;
+            z-index: 2;
         }
 
         .controls {
@@ -192,12 +194,9 @@
         }
 
         #backgroundCanvas {
-            display: block;
-            margin: 0 auto;
-            width: 100%;
-            max-width: 500px;
-            aspect-ratio: 1/1;
-            border: 2px solid white;
+            position: fixed;
+            z-index: -1;
+            pointer-events: none;
         }
 
         footer {
@@ -216,6 +215,7 @@
 </head>
 
 <body class="singular">
+    <canvas id="backgroundCanvas"></canvas>
     <main class="site-main">
         <article class="hentry entry">
             <header class="entry-header responsive-max-width">
@@ -276,9 +276,6 @@
                     </button>
                 </div>
                 <div class="controls">
-                    <button id="visualizer">
-                        <i class="fa-solid fa-step-backward"></i> Visualizer
-                    </button>
                     <button id="prevBtn">
                         <i class="fa-solid fa-step-backward"></i> Previous
                     </button>
@@ -300,7 +297,6 @@
                 </div>
                 <video class="video"
                     preload="none"></video>
-                <canvas id="backgroundCanvas"></canvas>
             </div>
         </article>
     </main>
@@ -639,83 +635,75 @@
             analyser.getByteFrequencyData(dataArray);
             draw(dataArray);
         }
-        function resizeCanvas()
-        {
-            const size = Math.min(window.innerWidth, 500);
-            canvas.width = size;
-            canvas.height = size;
-        }
         const visualizers = [
             function drawVisualizer1(dataArray)
             {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const barWidth = canvas.width / dataArray.length * 20;
-                for (let i = 0; i < dataArray.length; i++)
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const maxRadius = Math.sqrt(canvas.width ** 2 + canvas.height ** 2);
+                const amplitude = dataArray.reduce((sum, val) => sum + val, 0) / dataArray.length;
+                const scale = 0.4 + amplitude / 128;
+                const time = performance.now() / 1000;
+                const rotation = time * 0.15;
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(rotation);
+                const layers = 30;
+                const shapesPerLayer = 18;
+                const baseAngleStep = (2 * Math.PI) / shapesPerLayer;
+                for (let l = 1; l <= layers; l++)
                 {
-                    const barHeight = dataArray[i] / 1;
-                    ctx.fillStyle = `rgba(255, 255, 255, ${ dataArray[i] / 1 })`;
-                    ctx.fillRect(i * barWidth, canvas.height - barHeight, barWidth, barHeight);
+                    const radius = (l / layers) * maxRadius * scale * (1 + 0.1 * Math.sin(time + l));
+                    ctx.beginPath();
+                    for (let i = 0; i <= shapesPerLayer; i++)
+                    {
+                        const angle = i * baseAngleStep;
+                        const distortion = 1 + 0.2 * Math.sin(angle * 3 + time + l);
+                        const x = Math.cos(angle) * radius * distortion;
+                        const y = Math.sin(angle) * radius * distortion;
+                        ctx.lineTo(x, y);
+                    }
+                    ctx.strokeStyle = `hsla(${ (l * 10 + time * 100) % 360 }, 90%, 60%, 0.3)`;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
                 }
-            },
-            function drawVisualizer2(dataArray)
-            {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.strokeStyle = 'white';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                for (let i = 0; i < dataArray.length; i++)
+                const blades = 16;
+                const bladeStep = (2 * Math.PI) / blades;
+                const bladeLength = maxRadius * 0.3 * scale;
+                for (let i = 0; i < blades; i++)
                 {
-                    const y = canvas.height - (dataArray[i] / 0.5);
-                    ctx.lineTo(i * (canvas.width / dataArray.length), y);
-                }
-                ctx.stroke();
-            },
-            function drawVisualizer3(dataArray)
-            {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'white';
-                const step = canvas.width / dataArray.length * 10;
-                for (let i = 0; i < dataArray.length; i++)
-                {
-                    const size = dataArray[i] / 1;
-                    ctx.fillRect(i * step, canvas.height - size, step - 2, size);
-                }
-            },
-            function drawVisualizer4(dataArray)
-            {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.strokeStyle = 'white';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                for (let i = 0; i < dataArray.length; i++)
-                {
-                    let angle = (i * Math.PI * 20) / dataArray.length;
-                    let radius = 50 + dataArray[i] / 1;
-                    let x = canvas.width / 2 + Math.cos(angle) * radius;
-                    let y = canvas.height / 2 + Math.sin(angle) * radius;
+                    const angle = i * bladeStep + time * 0.5;
+                    const x = Math.cos(angle) * bladeLength;
+                    const y = Math.sin(angle) * bladeLength;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
                     ctx.lineTo(x, y);
+                    ctx.strokeStyle = `rgba(255, 255, 255, 0.05)`;
+                    ctx.lineWidth = 100;
+                    ctx.stroke();
                 }
-                ctx.closePath();
-                ctx.stroke();
-            },
-            function drawVisualizer5(dataArray)
-            {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'white';
-                for (let i = 0; i < dataArray.length; i++)
+                const rings = 3;
+                const pointsPerRing = 12;
+                const pointAngleStep = (2 * Math.PI) / pointsPerRing;
+                for (let r = 0; r < rings; r++)
                 {
-                    let size = dataArray[i] / 1;
-                    ctx.fillRect(
-                        canvas.width / 2 - size / 2 + (i - dataArray.length / 2) * 100,
-                        canvas.height / 2 - size / 2,
-                        size,
-                        size
-                    );
+                    const ringRadius = maxRadius * (0.2 + r * 0.15) * scale;
+                    for (let p = 0; p < pointsPerRing; p++)
+                    {
+                        const angle = p * pointAngleStep + time * (0.2 + r * 0.1);
+                        const x = Math.cos(angle) * ringRadius;
+                        const y = Math.sin(angle) * ringRadius;
+                        ctx.beginPath();
+                        ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+                        ctx.strokeStyle = `hsla(${ (angle * 180 / Math.PI + time * 200) % 360 }, 100%, 50%, 0.1)`;
+                        ctx.lineWidth = 100;
+                        ctx.stroke();
+                    }
                 }
+                ctx.restore();
             }
         ];
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
         function draw(dataArray)
         {
             visualizers[currentVisualizerIndex](dataArray);
