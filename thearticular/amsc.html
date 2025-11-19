@@ -5,58 +5,58 @@
     <meta charset="UTF-8">
     <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <meta name="copyright"
-        content="hearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0. All rights reserved.">
+    <meta name="copyright"
+    content="hearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0. All rights reserved.">
     <meta name="license"
-        content="thearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0. All rights reserved.">
+    content="thearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0. All rights reserved.">
     <link rel="icon"
-        href="wp-content/uploads/mustat.png"
-        type="image/x-icon">
+    href="wp-content/uploads/mustat.png"
+    type="image/x-icon">
     <meta name="description"
-        content="Thearticular Songs">
+    content="Thearticular Songs">
     <meta name="keywords"
-        content="Thearticular Songs">
+    content="Thearticular Songs">
     <meta name="author"
-        content="Thearticular Songs">
+    content="Thearticular Songs">
     <meta name="robots"
-        content="index, follow">
+    content="index, follow">
     <meta property="og:title"
-        content="Thearticular Songs">
+    content="Thearticular Songs">
     <meta property="og:description"
-        content="Thearticular Songs">
+    content="Thearticular Songs">
     <meta property="og:image"
-        content="https://thearticular.github.io/thearticular/wp-content/uploads/mustat.png">
+    content="https://thearticular.github.io/thearticular/wp-content/uploads/mustat.png">
     <meta property="og:url"
-        content="https://thearticular.github.io/thearticular/amsc.html">
+    content="https://thearticular.github.io/thearticular/amsc.html">
     <meta property="og:site_name"
-        content="Thearticular Songs">
+    content="Thearticular Songs">
     <meta property="og:article:author"
-        content="Thearticular Songs">
+    content="Thearticular Songs">
     <meta property="og:article:section"
-        content="Thearticular Songs">
+    content="Thearticular Songs">
     <meta property="og:article:tag"
-        content="Thearticular Songs">
+    content="Thearticular Songs">
     <meta property="og:type"
-        content="Thearticular Songs">
+    content="Thearticular Songs">
     <meta name="twitter:card"
-        content="player">
+    content="player">
     <meta name="twitter:title"
-        content="Thearticular Songs">
+    content="Thearticular Songs">
     <meta name="twitter:description"
-        content="Thearticular Songs">
+    content="Thearticular Songs">
     <meta name="twitter:image"
-        content="https://thearticular.github.io/thearticular/wp-content/uploads/mustat.png">
+    content="https://thearticular.github.io/thearticular/wp-content/uploads/mustat.png">
     <meta name="twitter:player"
-        content="https://thearticular.github.io/thearticular/amsc.html">
+    content="https://thearticular.github.io/thearticular/amsc.html">
     <meta name="twitter:player:width"
-        content="300">
+    content="300">
     <meta name="twitter:player:height"
-        content="300">
+    content="300">
     <title>Thearticular Songs</title>
     <link rel='stylesheet'
-        href='wp-content/plugins/gutenberg/build/block-library/styleb3b9.css'>
+    href='wp-content/plugins/gutenberg/build/block-library/styleb3b9.css'>
     <link rel='stylesheet'
-        href='wp-content/themes/hever/stylee2c1.css'>
+    href='wp-content/themes/hever/stylee2c1.css'>
 
     <link rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -110,7 +110,7 @@
 
         footer {
             font-size: 0.7rem;
-            color: #aaa;
+            color: #ffffff;
             margin-top: 5px;
             font-weight: normal;
         }
@@ -139,10 +139,11 @@
             border-radius: 0;
             text-transform: uppercase;
             text-decoration: none;
+            min-width: 0;
         }
 
         button:active {
-            background-color: #fff;
+            background-color: #ffffff;
             color: #000;
         }
 
@@ -185,7 +186,6 @@
         }
 
         #seekbarProgress {
-            background-color: rgba(255, 255, 255, 0.2);
             border-right: 2px solid #fff;
             width: 0%;
             height: 100%;
@@ -203,16 +203,21 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 13px;
-            font-weight: bold;
-            text-shadow: 1px 1px 2px black;
+            font-size: 14px;
+            font-weight: bolder;
             pointer-events: none;
             z-index: 3;
+            color: white;
+            text-shadow:
+                -2px -2px 0 black,
+                2px -2px 0 black,
+                -2px 2px 0 black,
+                2px 2px 0 black;
         }
 
         #loadingText {
             display: none;
-            color: #ffcc00;
+            color: #ffffff;
         }
 
         .active-state {
@@ -242,7 +247,8 @@
         <article class="hentry entry">
             <header class="entry-header responsive-max-width">
                 <h1 class="entry-title">Songs - Full Page
-                    <footer>thearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0.</footer>
+                    <footer>thearticular.github.io © 2025 and all its content are licensed under CC BY-NC-ND 4.0.
+                    </footer>
                 </h1>
             </header>
             <div class="entry-content">
@@ -542,11 +548,11 @@
         document.getElementById('flatBtn').onclick = () => { resetEffects(); toggleActive('flatBtn'); };
         document.getElementById('bassBtn').onclick = () => {
             resetEffects(); toggleActive('bassBtn');
-            if (AudioGraph.initialized) AudioGraph.lGain.gain.value = 5; // Bass Boost
+            if (AudioGraph.initialized) AudioGraph.lGain.gain.value = 5;
         };
         document.getElementById('trebleBtn').onclick = () => {
             resetEffects(); toggleActive('trebleBtn');
-            if (AudioGraph.initialized) AudioGraph.hGain.gain.value = 5; // Treble Boost
+            if (AudioGraph.initialized) AudioGraph.hGain.gain.value = 5;
         };
         document.getElementById('panningBtn').onclick = () => {
             toggleActive('panningBtn');
@@ -564,26 +570,81 @@
         }
         function animateVisuals() {
             requestAnimationFrame(animateVisuals);
-            if (!AudioGraph.initialized || videoElement.paused) return;
-            const dataArray = new Uint8Array(AudioGraph.analyser.frequencyBinCount);
+            if (!AudioGraph.initialized || (typeof videoElement !== 'undefined' && videoElement.paused)) return;
+            const bufferLength = AudioGraph.analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
             AudioGraph.analyser.getByteFrequencyData(dataArray);
-            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            let bassTotal = 0;
+            let midTotal = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                if (i < 5) bassTotal += dataArray[i];
+                else if (i < 50) midTotal += dataArray[i];
+            }
+            const bassLevel = bassTotal / 5;
+            const midLevel = midTotal / 45;
+            let rawVolumeRatio = bassLevel / 255;
+            const dynamicEnergy = Math.pow(rawVolumeRatio, 3);
+            if (!bgCanvas.warpState) {
+                bgCanvas.warpState = {
+                    stars: [],
+                    count: 50,
+                    depth: 200
+                };
+                for (let i = 0; i < bgCanvas.warpState.count; i++) {
+                    bgCanvas.warpState.stars.push({
+                        x: (Math.random() - 0.5) * bgCanvas.width * 2,
+                        y: (Math.random() - 0.5) * bgCanvas.height * 2,
+                        z: Math.random() * bgCanvas.warpState.depth,
+                        colorVal: Math.random()
+                    });
+                }
+            }
             const cx = bgCanvas.width / 2;
             const cy = bgCanvas.height / 2;
             const time = performance.now() / 1000;
+            const fadeAlpha = 0 + (0.8 * (1 - dynamicEnergy));
+            bgCtx.fillStyle = `rgba(0, 0, 0, ${fadeAlpha})`;
+            bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
             bgCtx.save();
             bgCtx.translate(cx, cy);
-            bgCtx.rotate(time * 0.1);
-            for (let i = 0; i < 20; i++) {
-                const val = dataArray[i * 2] || 0;
-                const radius = 50 + (i * 10);
-                const distortion = val / 5;
-                bgCtx.beginPath();
-                bgCtx.arc(0, 0, radius + distortion, 0, Math.PI * 2);
-                bgCtx.strokeStyle = `hsla(${i * 15 + time * 50}, 50%, 50%, 0.2)`;
-                bgCtx.lineWidth = 2;
-                bgCtx.stroke();
+            const rotSpeed = 0.02 + (dynamicEnergy * 0.2);
+            bgCtx.rotate(time * rotSpeed);
+            if (dynamicEnergy > 0.1) {
+                const shakeAmt = dynamicEnergy * 20;
+                const shakeX = (Math.random() - 0.5) * shakeAmt;
+                const shakeY = (Math.random() - 0.5) * shakeAmt;
+                bgCtx.translate(shakeX, shakeY);
             }
+            const speed = 0.5 + (dynamicEnergy * 10);
+            bgCanvas.warpState.stars.forEach(star => {
+                star.z -= speed;
+                if (star.z <= 0) {
+                    star.z = bgCanvas.warpState.depth;
+                    star.x = (Math.random() - 0.5) * bgCanvas.width * 2;
+                    star.y = (Math.random() - 0.5) * bgCanvas.height * 2;
+                    if (Math.abs(star.x) < 50 && Math.abs(star.y) < 50) star.x += 100;
+                }
+                const k = 128.0 / star.z;
+                const px = star.x * k;
+                const py = star.y * k;
+                const tailLength = speed * (0.5 + dynamicEnergy);
+                const prevZ = star.z + tailLength;
+                const prevK = 128.0 / prevZ;
+                const prevPx = star.x * prevK;
+                const prevPy = star.y * prevK;
+                const distanceFade = 1 - (star.z / bgCanvas.warpState.depth);
+                const size = (1 - distanceFade) * (1 + dynamicEnergy * 4);
+                const hue = (time * 20) + (star.colorVal * 60) + (midLevel * 0.2);
+                const lightness = 30 + (dynamicEnergy * 60);
+                bgCtx.lineWidth = size;
+                bgCtx.lineCap = 'round';
+                bgCtx.strokeStyle = `hsla(${hue}, 80%, ${lightness}%, ${distanceFade})`;
+                bgCtx.beginPath();
+                bgCtx.moveTo(prevPx, prevPy);
+                bgCtx.lineTo(px, py);
+                bgCtx.stroke();
+            });
+            bgCtx.globalCompositeOperation = 'source-over';
             bgCtx.restore();
         }
     </script>
